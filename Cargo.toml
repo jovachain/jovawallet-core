@@ -1,0 +1,46 @@
+[workspace]
+resolver = "3"
+members = ["crates/jova-spike"]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+
+[workspace.dependencies]
+alloy             = { version = "2.0",  default-features = false, features = ["consensus", "signer-local", "sol-types", "dyn-abi"] }
+bdk_wallet        = { version = "3.0",  default-features = false, features = ["std"] }
+bitcoin           = { version = "0.32", default-features = false, features = ["secp-recovery"] }
+
+solana-keypair    = { version = "3.1", default-features = false }
+solana-pubkey     = { version = "4.2", default-features = false }
+solana-signature  = { version = "3.4", default-features = false }
+solana-transaction = { version = "4.1", default-features = false }
+solana-message    = { version = "4.1", default-features = false }
+
+xrpl              = { version = "0.1.2", default-features = false }
+
+secp256k1         = { version = "0.31", default-features = false, features = ["alloc", "lowmemory", "global-context"] }
+ed25519-dalek     = { version = "2.2",  default-features = false, features = ["alloc"] }
+bip39             = { version = "2.2",  default-features = false, features = ["alloc"] }
+slip-10           = { version = "0.4",  default-features = false }
+zeroize           = { version = "1.8",  default-features = false, features = ["alloc"] }
+
+uniffi            = { version = "0.31", features = ["build", "cli"] }
+wasm-bindgen      = { version = "0.2" }
+serde-wasm-bindgen = { version = "0.6" }
+
+serde             = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde_json        = { version = "1", default-features = false, features = ["alloc"] }
+thiserror         = "2"
+hex               = { version = "0.4", default-features = false, features = ["alloc"] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
+panic = "abort"
+debug = "line-tables-only"
+
+[profile.release.package."*"]
+opt-level = 3
