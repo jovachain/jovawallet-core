@@ -18,7 +18,7 @@ solana-signature  = { version = "3.4", default-features = false }
 solana-transaction = { version = "4.1", default-features = false }
 solana-message    = { version = "4.1", default-features = false }
 
-xrpl              = { version = "0.1.2", default-features = false }
+xrpl-rust         = { version = "1.1", default-features = false, features = ["core", "wallet", "models"] }
 
 secp256k1         = { version = "0.31", default-features = false, features = ["alloc", "lowmemory", "global-context"] }
 ed25519-dalek     = { version = "2.2",  default-features = false, features = ["alloc"] }

@@ -22,12 +22,11 @@ pub fn ping_chains() -> String {
         let _ = std::any::type_name::<solana_transaction::versioned::VersionedTransaction>();
     }
 
-    // NOTE: xrpl 0.1.2 on crates.io has NO keypair/signing types.
-    // xrpl::core::keypairs::Seed does not exist in this crate.
-    // The only public type is XrplClient (a WebSocket client).
-    // This is a critical finding for the feasibility report.
+    // xrpl-rust 1.1 with features = ["core", "wallet", "models"] provides
+    // signing capability (Wallet, keypairs) without any networking / OpenSSL dep.
+    // Switched from xrpl 0.1.2 (WebSocket-only, no signing types, pulls openssl-sys).
     #[cfg(feature = "chain-xrp")]
-    let _ = std::any::type_name::<xrpl::XrplClient>();
+    let _ = std::any::type_name::<xrpl::wallet::Wallet>();
 
     "chains-linked".to_string()
 }

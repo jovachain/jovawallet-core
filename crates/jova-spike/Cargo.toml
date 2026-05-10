@@ -17,7 +17,7 @@ solana-transaction = { workspace = true, optional = true }
 solana-message     = { workspace = true, optional = true }
 solana-pubkey      = { workspace = true, optional = true }
 solana-signature   = { workspace = true, optional = true }
-xrpl               = { workspace = true, optional = true }
+xrpl-rust          = { workspace = true, optional = true }
 
 secp256k1.workspace     = true
 ed25519-dalek.workspace = true
@@ -33,7 +33,7 @@ default   = ["chain-evm", "chain-btc", "chain-sol", "chain-xrp", "ffi"]
 chain-evm = ["dep:alloy"]
 chain-btc = ["dep:bdk_wallet", "dep:bitcoin"]
 chain-sol = ["dep:solana-keypair", "dep:solana-transaction", "dep:solana-message", "dep:solana-pubkey", "dep:solana-signature"]
-chain-xrp = ["dep:xrpl"]
+chain-xrp = ["dep:xrpl-rust"]
 ffi       = ["dep:uniffi"]
 wasm      = ["dep:wasm-bindgen"]
 
