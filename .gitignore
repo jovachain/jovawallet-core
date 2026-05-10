@@ -1,0 +1,29 @@
+# Rust
+target/
+Cargo.lock.bak
+**/*.rs.bk
+
+# uniffi
+generated/
+
+# Swift
+.build/
+DerivedData/
+*.xcframework
+*.xcframework.zip
+
+# Kotlin / Android
+build/
+.gradle/
+local.properties
+*.aar
+
+# WASM / Node
+node_modules/
+pkg/
+dist/
+*.tgz
+
+# OS
+.DS_Store
+Thumbs.db
