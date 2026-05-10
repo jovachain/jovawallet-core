@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.json diff
+*.toml diff
+Cargo.lock merge=binary
