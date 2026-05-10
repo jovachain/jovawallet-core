@@ -9,10 +9,16 @@
 **Tech Stack:** Same as Phase -1: Rust 1.95.0 build pin (edition 2024 / MSRV 1.85), uniffi-rs ≥ 0.29, wasm-bindgen + wasm-pack, cargo-ndk, Xcode 16+, Android NDK r27c+, Java 21, Node 22 (pnpm 10). Exact versions come from `docs/feasibility-report.md`'s "Recommended Phase 0 dependency configuration" section.
 
 **Preconditions:**
-- Phase -1 complete; `docs/feasibility-report.md` exists and shows GO.
-- The `spike/feasibility` branch is preserved but **not merged**. Phase 0 starts from `main` with a clean slate.
+- Phase -1 complete; `docs/feasibility-report.md` (on the `spike/feasibility` branch — Phase 0 implementers can `git show spike/feasibility:docs/feasibility-report.md` to read it without checking out the branch) shows GO.
+- The `spike/feasibility` branch is preserved but **not merged**. Phase 0 starts from `main` with a clean slate. The spike branch was pushed to `origin` on 2026-05-11 and CI proved every target.
 - The user has created GitHub repos `jovachain/jovawallet-core` and `jovachain/jovawallet-core-swift` (the satellite repo is not used in Phase 0 yet, but should exist).
 - The agent has read access to the feasibility report findings; especially the recommended `[workspace.dependencies]` block.
+
+**Decisions inherited from Phase -1 (recorded 2026-05-11):**
+- **WASM scope (option (c) from feasibility report):** BTC and XRP signing are REQUIRED for the mobile wallet (full-featured on iOS / Android / macOS host). **Browser WASM BTC/XRP signing is DEFERRED** beyond v1.1 because `secp256k1-sys` cannot cross-compile to `wasm32-unknown-unknown` with the default macOS toolchain. Phase 6 ships WASM with EVM + SOL only. **Phase 0 implication:** structure `jova-core-wasm` so that `chain-btc` and `chain-xrp` can be feature-flagged off for the WASM build path. Do not lock in an architecture that prevents flipping them back on later.
+- **XRP crate name:** the engine is `xrpl-rust` (not `xrpl`). Update any plan or doc text that still says `xrpl` when referring to the crate dependency. Rust code still imports as `use xrpl::…` because the crate exposes its module as `xrpl`.
+- **Workspace dep corrections:** the `[workspace.dependencies]` block in Task 2 Step 3 below reflects the spike's findings — `xrpl-rust = "1.1"`, `bip39 features = ["alloc"]` (not `english`), `bdk_wallet` adds `features = ["std"]`, `secp256k1` does NOT include `global-context` (poisons `no_std` via Cargo feature unification).
+- **Hardware-build precondition (relevant to Phase 7, mentioned here for completeness):** `secp256k1-sys` needs `arm-none-eabi-gcc` with newlib for `thumbv7em-none-eabihf`. Homebrew core's gcc 16 lacks newlib; use `armmbed/formulae/arm-none-eabi-gcc` 10.3 on macOS. CI uses `apt-get install -y gcc-arm-none-eabi`.
 
 **Exit criteria:**
 - `cargo test --workspace --release --locked` is green.
@@ -247,10 +253,13 @@ jova-core-primitives = { path = "crates/jova-core-primitives", version = "0.0.1"
 jova-core-chains     = { path = "crates/jova-core-chains",     version = "0.0.1" }
 jova-core            = { path = "crates/jova-core",            version = "0.0.1" }
 
-# Crypto primitives
-secp256k1     = { version = "0.30", default-features = false, features = ["alloc", "lowmemory", "global-context"] }
-ed25519-dalek = { version = "2.1",  default-features = false, features = ["alloc"] }
-bip39         = { version = "2.1",  default-features = false, features = ["english"] }
+# Crypto primitives (versions and features confirmed by Phase -1 spike, 2026-05-11).
+# NOTE: secp256k1 must NOT include `global-context` here — it requires `std` and would
+# poison the no_std primitives crate via Cargo's additive feature unification.
+secp256k1     = { version = "0.31", default-features = false, features = ["alloc", "lowmemory"] }
+ed25519-dalek = { version = "2.2",  default-features = false, features = ["alloc"] }
+# NOTE: bip39 2.2.x has no `english` feature — English wordlist is always-on. Use `alloc`.
+bip39         = { version = "2.2",  default-features = false, features = ["alloc"] }
 slip-10       = { version = "0.4",  default-features = false }    # Crate name uses hyphen.
 bip32         = { version = "0.5",  default-features = false, features = ["alloc"] }
 sha2          = { version = "0.10", default-features = false }
@@ -260,31 +269,40 @@ hmac          = { version = "0.12", default-features = false }
 zeroize       = { version = "1.8",  default-features = false, features = ["alloc", "derive"] }
 subtle        = { version = "2.6",  default-features = false }
 
-# Chain crates — versions reflect Phase -1 feasibility-report findings
-alloy             = { version = "0.9",  default-features = false, features = ["consensus", "signer-local", "sol-types", "dyn-abi"] }
-bdk_wallet        = { version = "1.5",  default-features = false }
-bitcoin           = { version = "0.33", default-features = false, features = ["secp-recovery"] }
+# Chain crates — versions confirmed by Phase -1 spike (2026-05-11).
+alloy             = { version = "2.0",  default-features = false, features = ["consensus", "signer-local", "sol-types", "dyn-abi"] }
+# NOTE: bdk_wallet 3.0 with `default-features = false` alone fails because miniscript
+# transitively requires `std`. Explicit `features = ["std"]` is required.
+bdk_wallet        = { version = "3.0",  default-features = false, features = ["std"] }
+bitcoin           = { version = "0.32", default-features = false, features = ["secp-recovery"] }
 
-# Solana: Anza's split crates rather than the monolithic solana-sdk.
-# Smaller dep tree, WASM-viable.
-solana-keypair     = { version = "2", default-features = false }
-solana-pubkey      = { version = "2", default-features = false }
-solana-signature   = { version = "2", default-features = false }
-solana-transaction = { version = "2", default-features = false }
-solana-message     = { version = "2", default-features = false }
+# Solana: Anza split crates (NOT the monolithic solana-sdk). Confirmed leaner; WASM-viable
+# for chain-sol with explicit per-version getrandom feature aliases in jova-core-wasm.
+solana-keypair     = { version = "3.1", default-features = false }
+solana-pubkey      = { version = "4.2", default-features = false }
+solana-signature   = { version = "3.4", default-features = false }
+solana-transaction = { version = "4.1", default-features = false }
+solana-message     = { version = "4.1", default-features = false }
 
-xrpl              = { version = "0.5", default-features = false }
+# XRP: crate name on crates.io is `xrpl-rust` — NOT `xrpl`. (`xrpl 0.1.2` and `xrpl 0.5`
+# are an unrelated WebSocket client with no signing primitives.) The crate exposes its
+# module as `xrpl`, so Rust code still imports `use xrpl::wallet::Wallet`.
+xrpl-rust         = { version = "1.1", default-features = false, features = ["core", "wallet", "models"] }
 
 # FFI / WASM
-uniffi            = { version = "0.29", features = ["build", "cli"] }
+uniffi            = { version = "0.31", features = ["build", "cli"] }
 wasm-bindgen      = "0.2"
 serde-wasm-bindgen = "0.6"
-getrandom         = { version = "0.3" }   # In jova-core-wasm we add features = ["wasm_js"]
+# NOTE: WASM dep tree has 3 concurrent getrandom versions (0.2 from alloy/k256, 0.3 from
+# Solana, 0.4 from wasm-pack boilerplate). jova-core-wasm declares explicit per-version
+# direct deps with `js`/`wasm_js` features enabled — see feasibility-report.md "Open
+# questions" for the long-term plan. The workspace dep here governs the 0.3 line only.
+getrandom         = { version = "0.3" }
 
 # Util
 serde      = { version = "1", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
-thiserror  = "2"          # 2.0 since Q4 2024
+thiserror  = "2"
 hex        = { version = "0.4", default-features = false, features = ["alloc"] }
 base64     = { version = "0.22", default-features = false, features = ["alloc"] }
 base58     = "0.2"
