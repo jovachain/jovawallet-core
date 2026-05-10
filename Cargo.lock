@@ -2271,6 +2271,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "jova-spike-nostd"
+version = "0.0.0-spike"
+dependencies = [
+ "bip39",
+ "ed25519-dalek",
+ "secp256k1 0.31.1",
+ "slip-10",
+ "zeroize",
+]
+
+[[package]]
 name = "jova-spike-wasm"
 version = "0.0.0-spike"
 dependencies = [
@@ -3144,8 +3155,6 @@ version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c3c81b43dc2d8877c216a3fccf76677ee1ebccd429566d3e67447290d0c42b2"
 dependencies = [
- "bitcoin_hashes",
- "rand 0.9.4",
  "secp256k1-sys 0.11.0",
 ]
 

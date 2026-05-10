@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/jova-spike", "crates/jova-spike-wasm"]
+members = ["crates/jova-spike", "crates/jova-spike-wasm", "crates/jova-spike-nostd"]
 
 [workspace.package]
 edition = "2024"
@@ -20,7 +20,7 @@ solana-message    = { version = "4.1", default-features = false }
 
 xrpl-rust         = { version = "1.1", default-features = false, features = ["core", "wallet", "models"] }
 
-secp256k1         = { version = "0.31", default-features = false, features = ["alloc", "lowmemory", "global-context"] }
+secp256k1         = { version = "0.31", default-features = false, features = ["alloc", "lowmemory"] }
 ed25519-dalek     = { version = "2.2",  default-features = false, features = ["alloc"] }
 bip39             = { version = "2.2",  default-features = false, features = ["alloc"] }
 slip-10           = { version = "0.4",  default-features = false }

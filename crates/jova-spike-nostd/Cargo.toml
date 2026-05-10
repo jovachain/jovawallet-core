@@ -1,0 +1,16 @@
+[package]
+name = "jova-spike-nostd"
+version = "0.0.0-spike"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+secp256k1     = { workspace = true, default-features = false, features = ["alloc", "lowmemory"] }
+ed25519-dalek = { workspace = true, default-features = false, features = ["alloc"] }
+bip39         = { workspace = true, default-features = false, features = ["alloc"] }
+slip-10       = { workspace = true, default-features = false }
+zeroize       = { workspace = true, default-features = false }
+
+[lib]
+name = "jova_spike_nostd"
+crate-type = ["lib"]
