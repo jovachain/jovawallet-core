@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-11
 **Branch:** `spike/feasibility`
-**Commit SHA:** `<filled at commit time>` (last commit prior to this report: `861330b`)
+**Commit SHA:** `9b11688`
 
 ---
 
