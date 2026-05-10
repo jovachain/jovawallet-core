@@ -95,7 +95,7 @@ Three options for Phase 6 (WASM release):
 - **(b) Emscripten in CI:** install Emscripten (`emcc`) and configure `cc-rs` to use it for the WASM target. This would let `secp256k1-sys` compile for WASM without code changes. Adds CI complexity (Emscripten is large); local developer builds also need Emscripten.
 - **(c) Ship WASM v1.1 with EVM + SOL only; add BTC and XRP in a later WASM release:** feature-flag chain-btc and chain-xrp out of the WASM build at v1.1 launch. BTC and XRP users on web fall back to backend signing at v1.1 and gain client-side WASM support in a follow-up release. Simplest for Phase 6; defers the hard problem.
 
-The user must decide between these options before Phase 6 begins. No decision required for Phase 0.
+**Resolution (2026-05-11, user decision):** option **(c)**. BTC and XRP are required for the mobile wallet and remain full-featured on iOS and Android native targets. Browser WASM BTC/XRP signing is **deferred** beyond v1.1 — Phase 6 ships WASM with EVM + SOL only. Phase 0 should structure `jova-core-wasm` so that `chain-btc` and `chain-xrp` are feature-flagged off for the WASM build path, leaving the door open for a later WASM release once a pure-Rust secp256k1 swap or Emscripten path is chosen.
 
 ### chain-xrp on WASM
 
@@ -107,7 +107,7 @@ Options for Phase 6:
 - **(b) Emscripten in CI:** same as chain-btc option (b) above.
 - **(c) Ship WASM v1.1 without XRP:** same as chain-btc option (c) above.
 
-If the user chooses option (c) for chain-btc, the same choice naturally applies to chain-xrp. Options (a) and (b) are independent per chain.
+**Resolution (2026-05-11, user decision):** option **(c)**, matching the chain-btc decision above. XRP signing remains full-featured on mobile (iOS, Android, native macOS). Browser WASM XRP support is deferred beyond v1.1.
 
 ### chain-sol on WASM
 
