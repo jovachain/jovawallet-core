@@ -1,0 +1,53 @@
+[package]
+name = "jova-spike-wasm"
+version = "0.0.0-spike"
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.wasm-pack.profile.release]
+# wasm-pack bundles an older wasm-opt that rejects bulk-memory ops emitted by
+# rustc 1.95. Disable the post-pass for the spike; production builds should
+# install a current binaryen and enable this.
+wasm-opt = false
+
+[dependencies]
+# alloy is non-optional: uses pure-Rust k256, confirmed WASM-compatible.
+alloy = { workspace = true }
+# bitcoin pulls secp256k1-sys (C FFI); tested under chain-btc feature.
+bitcoin = { workspace = true, optional = true }
+bdk_wallet = { workspace = true, optional = true }
+solana-keypair     = { workspace = true, optional = true }
+solana-transaction = { workspace = true, optional = true }
+solana-message     = { workspace = true, optional = true }
+solana-pubkey      = { workspace = true, optional = true }
+solana-signature   = { workspace = true, optional = true }
+xrpl-rust = { workspace = true, optional = true }
+# secp256k1 wraps C library (secp256k1-sys) — not WASM-compatible on Apple clang
+# (no WASM backend); omitted from non-optional deps; tested under chain-btc.
+secp256k1 = { workspace = true, optional = true }
+ed25519-dalek = { workspace = true }
+bip39 = { workspace = true }
+slip-10 = { workspace = true }
+zeroize = { workspace = true }
+wasm-bindgen.workspace = true
+getrandom = { version = "0.4", features = ["wasm_js"] }
+# Force-enable getrandom 0.2's "js" feature for transitive deps (alloy → k256 →
+# elliptic-curve → crypto-bigint → rand_core 0.6 → getrandom 0.2).
+getrandom02 = { package = "getrandom", version = "0.2", features = ["js"] }
+# Force-enable getrandom 0.3's "wasm_js" feature for solana-keypair deps
+# (solana uses rand 0.9 → rand_core 0.9 → getrandom 0.3).
+getrandom03 = { package = "getrandom", version = "0.3", features = ["wasm_js"], optional = true }
+
+[features]
+default = []
+# chain-btc: bitcoin + secp256k1 require secp256k1-sys C FFI.
+# On macOS, Apple clang has no WASM backend — this feature will fail unless
+# a WASM-capable clang (e.g. Emscripten) is installed. Spike finding: chain-btc WASM
+# needs CI toolchain change or a pure-Rust secp256k1 alternative.
+chain-btc = ["dep:bitcoin", "dep:bdk_wallet", "dep:secp256k1"]
+chain-sol = ["dep:solana-keypair", "dep:solana-transaction", "dep:solana-message", "dep:solana-pubkey", "dep:solana-signature", "dep:getrandom03"]
+chain-xrp = ["dep:xrpl-rust"]
+all-chains = ["chain-btc", "chain-sol", "chain-xrp"]
