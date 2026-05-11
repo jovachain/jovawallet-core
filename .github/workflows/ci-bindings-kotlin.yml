@@ -21,7 +21,7 @@ jobs:
           restore-keys: ubuntu-kotlin-cargo-
 
       # NDK r29 stable (confirmed working in spike; r30-beta caused codegen drift).
-      - uses: nttld/setup-ndk@v2
+      - uses: nttld/setup-ndk@v1.6.0
         id: ndk
         with:
           ndk-version: r29
