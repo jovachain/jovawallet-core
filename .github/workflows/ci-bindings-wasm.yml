@@ -1,0 +1,44 @@
+name: ci-bindings-wasm
+on: [push, pull_request]
+
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ubuntu-wasm-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ubuntu-wasm-cargo-
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      # pnpm 10+ required; install before setup-node so corepack can pick it up.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      # Node 22+: pnpm 10 requires Node >= 18; 22 LTS is the current recommended.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: bindings/wasm/pnpm-lock.yaml
+
+      # Build WASM with --target nodejs (spike finding: file:// fetch is not
+      # supported by Node's undici; nodejs target uses fs.readFileSync instead).
+      # wasm-opt = false is already set in crates/jova-core-wasm/Cargo.toml, so no
+      # override is needed here.
+      - run: ./bindings/wasm/scripts/build-wasm.sh
+
+      - run: cd bindings/wasm && pnpm install && pnpm test

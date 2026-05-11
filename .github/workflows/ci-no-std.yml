@@ -1,0 +1,32 @@
+name: ci-no-std
+on: [push, pull_request]
+
+jobs:
+  no_std:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ubuntu-nostd-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ubuntu-nostd-cargo-
+
+      # gcc-arm-none-eabi provides the linker and runtime stubs needed when
+      # cross-compiling to the Cortex-M target (spike finding: build fails without it).
+      - name: Install ARM bare-metal toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi
+
+      # --no-default-features disables the "std" feature so the build actually
+      # validates that jova-core-primitives compiles without the standard library.
+      # (Task 3 finding: the crate's default feature is "std"; without this flag
+      # the build silently enables std and the no_std guarantee is not tested.)
+      - run: cargo build -p jova-core-primitives --target thumbv7em-none-eabihf --no-default-features
