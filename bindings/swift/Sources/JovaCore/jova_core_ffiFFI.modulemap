@@ -1,0 +1,7 @@
+module jova_core_ffiFFI {
+    header "jova_core_ffiFFI.h"
+    export *
+    use "Darwin"
+    use "_Builtin_stdbool"
+    use "_Builtin_stdint"
+}
