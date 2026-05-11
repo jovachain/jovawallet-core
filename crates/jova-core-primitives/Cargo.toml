@@ -1,0 +1,17 @@
+[package]
+name = "jova-core-primitives"
+version = "0.0.1"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "no_std-clean cryptographic primitives for jovawallet-core"
+
+[lib]
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+zeroize.workspace = true

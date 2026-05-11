@@ -1,0 +1,13 @@
+[package]
+name = "jova-core-chains"
+version = "0.0.1"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Per-chain encoding and signing for jovawallet-core"
+
+[lib]
+
+[dependencies]
+jova-core-primitives.workspace = true

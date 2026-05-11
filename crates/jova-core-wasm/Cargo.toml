@@ -1,0 +1,18 @@
+[package]
+name = "jova-core-wasm"
+version = "0.0.1"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "wasm-bindgen layer for jova-core"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+jova-core.workspace = true
+wasm-bindgen.workspace = true
+serde-wasm-bindgen.workspace = true
+# getrandom 0.3 uses `wasm_js` feature for browser RNG (renamed from `js` in 0.2).
+getrandom = { workspace = true, features = ["wasm_js"] }
