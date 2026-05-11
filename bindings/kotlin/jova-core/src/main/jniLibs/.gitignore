@@ -1,0 +1,2 @@
+# Android native libraries are built by build-aar.sh; do not commit.
+*.so

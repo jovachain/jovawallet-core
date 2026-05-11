@@ -1,0 +1,18 @@
+{
+  "version": "0.1",
+  "vectors": [
+    {
+      "id": "phase0.mnemonic_validation_neg.gibberish",
+      "kind": "mnemonic_validation_neg",
+      "input": {
+        "words": "this is not a valid mnemonic at all",
+        "passphrase": ""
+      },
+      "expected": {
+        "valid": false
+      },
+      "source": "Phase 0 hello-world",
+      "source_url": "internal"
+    }
+  ]
+}
