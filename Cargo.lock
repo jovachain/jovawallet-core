@@ -2834,9 +2834,12 @@ dependencies = [
 name = "jova-core"
 version = "0.0.1"
 dependencies = [
+ "hex",
  "jova-core-chains",
  "jova-core-primitives",
+ "serde",
  "serde_json",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

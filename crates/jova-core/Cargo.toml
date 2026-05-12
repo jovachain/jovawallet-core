@@ -12,6 +12,10 @@ description = "Public Rust API for jovawallet-core"
 [dependencies]
 jova-core-primitives.workspace = true
 jova-core-chains.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
+hex.workspace = true
 serde_json.workspace = true
