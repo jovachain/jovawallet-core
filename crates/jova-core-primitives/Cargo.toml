@@ -11,7 +11,13 @@ description = "no_std-clean cryptographic primitives for jovawallet-core"
 
 [features]
 default = ["std"]
-std = []
+std = ["dep:thiserror", "dep:getrandom"]
 
 [dependencies]
 zeroize.workspace = true
+bip39.workspace = true
+thiserror = { workspace = true, optional = true }
+getrandom = { version = "0.3", optional = true }
+
+[dev-dependencies]
+hex.workspace = true

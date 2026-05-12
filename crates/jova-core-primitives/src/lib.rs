@@ -1,15 +1,20 @@
 //! jova-core-primitives — no_std-clean cryptographic primitives.
-//!
-//! Phase 0 stub. Phase 1 fills this in.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![forbid(unsafe_code)]
 
 extern crate alloc;
 
-/// Returns true iff `words` is the literal string "valid". Phase 0 stub
-/// for the trivial vector test. Phase 1 replaces this with real BIP-39
-/// validation.
+mod error;
+mod mnemonic;
+mod seed;
+
+pub use error::MnemonicError;
+pub use mnemonic::{Mnemonic, Strength};
+pub use seed::Seed;
+
+// Phase 0 stub — keep until Phase 1 task that removes it.
+#[deprecated(note = "Phase 0 stub; use Mnemonic::validate instead")]
 pub fn is_valid_mnemonic_stub(words: &str, _passphrase: &str) -> bool {
-    words == "valid"
+    Mnemonic::validate(words, _passphrase).is_ok()
 }
