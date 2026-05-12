@@ -23,11 +23,15 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
         unitTests.all {
-            // For JVM unit tests on macOS host: point JNA at the native dylib built for
-            // aarch64-apple-darwin. Android slice validation is CI-only (requires a device/emulator).
+            // For JVM unit tests on the host (macOS dev or Linux CI): point JNA at the
+            // host library produced by `bindings/kotlin/scripts/build-aar.sh` (which runs
+            // `cargo build -p jova-core-ffi --release` without `--target`, so output lands
+            // at `target/release/`). JNA picks the correct extension automatically — .dylib
+            // on macOS, .so on Linux. Android slice validation is CI-only (requires a
+            // device/emulator).
             val repoRoot = rootProject.projectDir.parentFile.parentFile.absolutePath
-            val dylibDir = "$repoRoot/target/aarch64-apple-darwin/release"
-            it.jvmArgs("-Djna.library.path=$dylibDir")
+            val libDir = "$repoRoot/target/release"
+            it.jvmArgs("-Djna.library.path=$libDir")
         }
     }
 }
