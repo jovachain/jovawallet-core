@@ -1,0 +1,12 @@
+# Default owners for everything.
+*                           @jovachain/sdk-leads
+
+# Crypto layers require crypto-leads review.
+/crates/jova-core-primitives/  @jovachain/sdk-leads @jovachain/crypto-leads
+/crates/jova-core-chains/      @jovachain/sdk-leads @jovachain/crypto-leads
+/spec/                         @jovachain/sdk-leads @jovachain/crypto-leads
+
+# Bindings owned by SDK leads only.
+/crates/jova-core-ffi/         @jovachain/sdk-leads
+/crates/jova-core-wasm/        @jovachain/sdk-leads
+/bindings/                     @jovachain/sdk-leads

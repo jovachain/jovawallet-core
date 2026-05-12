@@ -1,0 +1,91 @@
+[workspace]
+resolver = "3"   # Edition 2024 default resolver
+members = [
+    "crates/jova-core-primitives",
+    "crates/jova-core-chains",
+    "crates/jova-core",
+    "crates/jova-core-ffi",
+    "crates/jova-core-wasm",
+    "tools/verify-spec",
+]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"   # MSRV: edition 2024 requires 1.85+. Build uses 1.95.0 (toolchain pin).
+license = "MIT"
+repository = "https://github.com/jovachain/jovawallet-core"
+authors = ["Jovachain SDK <sdk@jovachain.io>"]
+
+[workspace.dependencies]
+# Inter-crate
+jova-core-primitives = { path = "crates/jova-core-primitives", version = "0.0.1" }
+jova-core-chains     = { path = "crates/jova-core-chains",     version = "0.0.1" }
+jova-core            = { path = "crates/jova-core",            version = "0.0.1" }
+
+# Crypto primitives (versions and features confirmed by Phase -1 spike, 2026-05-11).
+# NOTE: secp256k1 must NOT include `global-context` here — it requires `std` and would
+# poison the no_std primitives crate via Cargo's additive feature unification.
+secp256k1     = { version = "0.31", default-features = false, features = ["alloc", "lowmemory"] }
+ed25519-dalek = { version = "2.2",  default-features = false, features = ["alloc"] }
+# NOTE: bip39 2.2.x has no `english` feature — English wordlist is always-on. Use `alloc`.
+bip39         = { version = "2.2",  default-features = false, features = ["alloc"] }
+slip-10       = { version = "0.4",  default-features = false }    # Crate name uses hyphen.
+bip32         = { version = "0.5",  default-features = false, features = ["alloc"] }
+sha2          = { version = "0.10", default-features = false }
+sha3          = { version = "0.10", default-features = false }
+ripemd        = { version = "0.1",  default-features = false }
+hmac          = { version = "0.12", default-features = false }
+zeroize       = { version = "1.8",  default-features = false, features = ["alloc", "derive"] }
+subtle        = { version = "2.6",  default-features = false }
+
+# Chain crates — versions confirmed by Phase -1 spike (2026-05-11).
+alloy             = { version = "2.0",  default-features = false, features = ["consensus", "signer-local", "sol-types", "dyn-abi"] }
+# NOTE: bdk_wallet 3.0 with `default-features = false` alone fails because miniscript
+# transitively requires `std`. Explicit `features = ["std"]` is required.
+bdk_wallet        = { version = "3.0",  default-features = false, features = ["std"] }
+bitcoin           = { version = "0.32", default-features = false, features = ["secp-recovery"] }
+
+# Solana: Anza split crates (NOT the monolithic solana-sdk). Confirmed leaner; WASM-viable
+# for chain-sol with explicit per-version getrandom feature aliases in jova-core-wasm.
+solana-keypair     = { version = "3.1", default-features = false }
+solana-pubkey      = { version = "4.2", default-features = false }
+solana-signature   = { version = "3.4", default-features = false }
+solana-transaction = { version = "4.1", default-features = false }
+solana-message     = { version = "4.1", default-features = false }
+
+# XRP: crate name on crates.io is `xrpl-rust` — NOT `xrpl`. (`xrpl 0.1.2` and `xrpl 0.5`
+# are an unrelated WebSocket client with no signing primitives.) The crate exposes its
+# module as `xrpl`, so Rust code still imports `use xrpl::wallet::Wallet`.
+xrpl-rust         = { version = "1.1", default-features = false, features = ["core", "wallet", "models"] }
+
+# FFI / WASM
+uniffi            = { version = "0.31", features = ["build", "cli"] }
+wasm-bindgen      = "0.2"
+serde-wasm-bindgen = "0.6"
+# NOTE: WASM dep tree has 3 concurrent getrandom versions (0.2 from alloy/k256, 0.3 from
+# Solana, 0.4 from wasm-pack boilerplate). jova-core-wasm declares explicit per-version
+# direct deps with `js`/`wasm_js` features enabled — see feasibility-report.md "Open
+# questions" for the long-term plan. The workspace dep here governs the 0.3 line only.
+getrandom         = { version = "0.3" }
+
+# Util
+serde      = { version = "1", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1", default-features = false, features = ["alloc"] }
+thiserror  = "2"
+hex        = { version = "0.4", default-features = false, features = ["alloc"] }
+base64     = { version = "0.22", default-features = false, features = ["alloc"] }
+base58     = "0.2"
+
+# Test only
+proptest = "1.6"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
+panic = "abort"             # Smaller binary; signing SDK uses Result, not panic-recovery.
+                            # Unwinding through FFI is undefined behavior anyway.
+debug = "line-tables-only"  # Just enough for crash symbolication.
+
+[profile.release.package."*"]
+opt-level = 3

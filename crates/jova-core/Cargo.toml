@@ -1,0 +1,17 @@
+[package]
+name = "jova-core"
+version = "0.0.1"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Public Rust API for jovawallet-core"
+
+[lib]
+
+[dependencies]
+jova-core-primitives.workspace = true
+jova-core-chains.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

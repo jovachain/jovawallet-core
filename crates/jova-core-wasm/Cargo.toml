@@ -1,0 +1,24 @@
+[package]
+name = "jova-core-wasm"
+version = "0.0.1"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "wasm-bindgen layer for jova-core"
+
+[lib]
+crate-type = ["cdylib"]
+
+# wasm-pack 0.14 bundles a wasm-opt that rejects bulk-memory ops emitted by
+# rustc 1.95+. Disable the post-pass; production Phase 6 builds should install a
+# current binaryen and re-enable. (Spike finding: spike/feasibility Cargo.toml.)
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[dependencies]
+jova-core.workspace = true
+wasm-bindgen.workspace = true
+serde-wasm-bindgen.workspace = true
+# getrandom 0.3 uses `wasm_js` feature for browser RNG (renamed from `js` in 0.2).
+getrandom = { workspace = true, features = ["wasm_js"] }

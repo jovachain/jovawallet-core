@@ -11,6 +11,7 @@ generated/
 DerivedData/
 *.xcframework
 *.xcframework.zip
+xcframework-headers/
 
 # Kotlin / Android
 build/

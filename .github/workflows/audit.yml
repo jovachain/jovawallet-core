@@ -1,0 +1,28 @@
+name: audit
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 4 * * *'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ubuntu-audit-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ubuntu-audit-cargo-
+
+      - name: Install cargo-audit and cargo-deny
+        run: cargo install cargo-audit cargo-deny --locked
+
+      - run: cargo audit
+      - run: cargo deny check

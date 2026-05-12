@@ -1,0 +1,32 @@
+name: ci-bindings-swift
+on: [push, pull_request]
+
+jobs:
+  swift:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim,aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: macos-swift-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: macos-swift-cargo-
+
+      # uniffi CLI binary ships inside the uniffi umbrella crate (0.30+).
+      # Install via --features cli so both uniffi-bindgen and uniffi-bindgen-swift
+      # are placed on PATH. Version must match the uniffi macro crate in Cargo.toml
+      # (currently 0.31.1). --locked freezes transitive deps.
+      - name: Install uniffi-bindgen
+        run: cargo install uniffi --features cli --locked
+
+      # Build XCFramework (device + sim + macOS universal) then run Swift tests.
+      - run: ./bindings/swift/scripts/build-xcframework.sh
+      - run: cd bindings/swift && swift test

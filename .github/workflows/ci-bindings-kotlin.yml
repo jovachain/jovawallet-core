@@ -1,0 +1,61 @@
+name: ci-bindings-kotlin
+on: [push, pull_request]
+
+jobs:
+  kotlin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ubuntu-kotlin-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ubuntu-kotlin-cargo-
+
+      # NDK r29 stable (confirmed working in spike; r30-beta caused codegen drift).
+      - uses: nttld/setup-ndk@v1.6.0
+        id: ndk
+        with:
+          ndk-version: r29
+
+      # Install cargo-ndk (Android cross-compile helper) and uniffi CLI.
+      # uniffi version must match the macro crate in Cargo.toml (currently 0.31.1).
+      - name: Install cargo-ndk and uniffi-bindgen
+        run: |
+          cargo install cargo-ndk --locked
+          cargo install uniffi --features cli --locked
+
+      # Java 21: Kotlin scaffold pins jvmToolchain(21) in build.gradle.kts.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # Android SDK platform 36: AGP requires the exact compileSdk platform to be
+      # present. The ubuntu-latest runner ships with several SDK versions but not
+      # always android-36, so install it explicitly.
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sudo ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
+            "platforms;android-36" || \
+          yes | sudo ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
+            --sdk_root="${ANDROID_SDK_ROOT}" "platforms;android-36"
+
+      # Build .so files + generate Kotlin bindings + assemble AAR.
+      - name: Build AAR
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: ./bindings/kotlin/scripts/build-aar.sh
+
+      # Run JVM unit tests (robolectric-free; JNA loads the host dylib).
+      - run: cd bindings/kotlin && ./gradlew :jova-core:test
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}

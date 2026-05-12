@@ -1,0 +1,16 @@
+[package]
+name = "jova-core-ffi"
+version = "0.0.1"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "uniffi-rs bindings layer for jova-core"
+
+[lib]
+crate-type = ["lib", "staticlib", "cdylib"]
+name = "jova_core_ffi"
+
+[dependencies]
+jova-core.workspace = true
+uniffi.workspace = true
