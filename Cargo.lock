@@ -2861,6 +2861,7 @@ name = "jova-core-ffi"
 version = "0.0.1"
 dependencies = [
  "jova-core",
+ "thiserror 2.0.18",
  "uniffi",
 ]
 

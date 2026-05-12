@@ -14,3 +14,4 @@ name = "jova_core_ffi"
 [dependencies]
 jova-core.workspace = true
 uniffi.workspace = true
+thiserror.workspace = true
