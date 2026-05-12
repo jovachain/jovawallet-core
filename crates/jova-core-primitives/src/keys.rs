@@ -9,6 +9,14 @@ pub struct XPrv {
 }
 
 impl XPrv {
+    /// Construct an `XPrv` directly from raw key material.
+    ///
+    /// **Use only in tests and test-vector harnesses.**  Normal code should
+    /// produce an `XPrv` via `derive_secp256k1`.
+    pub fn from_raw_key_and_chain_code(key: [u8; 32], chain_code: [u8; 32]) -> Self {
+        Self { key, chain_code }
+    }
+
     pub fn private_key_bytes(&self) -> &[u8; 32] {
         &self.key
     }
