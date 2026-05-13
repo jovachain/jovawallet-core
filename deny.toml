@@ -5,7 +5,13 @@ all-features = true
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked  = "deny"
-ignore  = []
+ignore  = [
+    # Both crates are flagged "unmaintained" but have no security CVE and no safe
+    # upgrade available. Pulled in transitively via alloy-sol-types. Revisit if
+    # alloy migrates off them or if a real vulnerability is filed.
+    "RUSTSEC-2024-0388",  # derivative — unmaintained
+    "RUSTSEC-2024-0436",  # paste      — unmaintained
+]
 
 [licenses]
 allow = [
