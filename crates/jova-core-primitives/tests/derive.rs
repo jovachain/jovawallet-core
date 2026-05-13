@@ -9,8 +9,8 @@ fn parses_canonical_eth_path() {
     assert_eq!(p.indices[0], 0x8000_002C); // 44 hardened
     assert_eq!(p.indices[1], 0x8000_003C); // 60 hardened
     assert_eq!(p.indices[2], 0x8000_0000); // 0 hardened
-    assert_eq!(p.indices[3], 0);           // 0
-    assert_eq!(p.indices[4], 0);           // 0
+    assert_eq!(p.indices[3], 0); // 0
+    assert_eq!(p.indices[4], 0); // 0
 }
 
 #[test]

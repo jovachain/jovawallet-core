@@ -10,9 +10,9 @@ use jova_core_primitives::XPrv;
 pub fn sign(key: &XPrv, tx: &EvmUnsigned) -> Result<(String, String), ChainError> {
     use alloy::consensus::{SignableTransaction, TxEip1559};
     use alloy::eips::eip2930::{AccessList, AccessListItem as AlloyAcl};
-    use alloy::primitives::{Address as AlloyAddress, Bytes, TxKind, B256, U256};
-    use alloy::signers::local::LocalSigner;
+    use alloy::primitives::{Address as AlloyAddress, B256, Bytes, TxKind, U256};
     use alloy::signers::SignerSync;
+    use alloy::signers::local::LocalSigner;
 
     // 1. Parse fields.
     let to: AlloyAddress = tx
@@ -45,7 +45,10 @@ pub fn sign(key: &XPrv, tx: &EvmUnsigned) -> Result<(String, String), ChainError
                 .map_err(|_| ChainError::MalformedUnsignedTx("evm_access_list_invalid".into()))?;
             keys.push(kb);
         }
-        access_list_items.push(AlloyAcl { address, storage_keys: keys });
+        access_list_items.push(AlloyAcl {
+            address,
+            storage_keys: keys,
+        });
     }
 
     // 3. Build the typed transaction.

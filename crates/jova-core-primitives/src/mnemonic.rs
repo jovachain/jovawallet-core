@@ -34,7 +34,10 @@ impl Mnemonic {
         getrandom::fill(&mut entropy[..entropy_bytes]).expect("OS entropy available");
         let m = Bip39Mnemonic::from_entropy(&entropy[..entropy_bytes])
             .expect("entropy length is valid");
-        Self { words: m.to_string(), passphrase: String::new() }
+        Self {
+            words: m.to_string(),
+            passphrase: String::new(),
+        }
     }
 
     pub fn validate(words: &str, _passphrase: &str) -> Result<(), MnemonicError> {

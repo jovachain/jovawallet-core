@@ -29,9 +29,9 @@ impl From<jova_core_primitives::MnemonicError> for JovaError {
 impl From<jova_core_chains::ChainError> for JovaError {
     fn from(e: jova_core_chains::ChainError) -> Self {
         match e {
-            jova_core_chains::ChainError::InvalidAddress => {
-                JovaError::InvalidAddress { chain: "evm".into() }
-            }
+            jova_core_chains::ChainError::InvalidAddress => JovaError::InvalidAddress {
+                chain: "evm".into(),
+            },
             jova_core_chains::ChainError::MalformedUnsignedTx(r) => {
                 JovaError::MalformedUnsignedTx { reason: r }
             }
@@ -41,9 +41,7 @@ impl From<jova_core_chains::ChainError> for JovaError {
             jova_core_chains::ChainError::SigningFailed(r) => {
                 JovaError::SigningFailed { reason: r }
             }
-            jova_core_chains::ChainError::Internal(r) => {
-                JovaError::Internal { reason: r }
-            }
+            jova_core_chains::ChainError::Internal(r) => JovaError::Internal { reason: r },
         }
     }
 }

@@ -40,23 +40,32 @@ pub struct EvmUnsigned {
     pub chain_id: u64,
     pub nonce: u64,
     pub to: String,
-    pub value: String,                       // wei, decimal string (avoids u128/U256 marshalling)
+    pub value: String, // wei, decimal string (avoids u128/U256 marshalling)
     pub gas_limit: u64,
     pub max_fee_per_gas: String,
     pub max_priority_fee_per_gas: String,
-    pub data: String,                        // 0x-prefixed hex
+    pub data: String, // 0x-prefixed hex
     pub access_list: Vec<AccessListItem>,
 }
 
 #[derive(uniffi::Enum, Clone, Debug)]
 pub enum UnsignedTx {
-    Evm { tx: EvmUnsigned },
+    Evm {
+        tx: EvmUnsigned,
+    },
     /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-    Bitcoin { psbt_base64: String },
+    Bitcoin {
+        psbt_base64: String,
+    },
     /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-    Solana { message_base64: String, recent_blockhash: String },
+    Solana {
+        message_base64: String,
+        recent_blockhash: String,
+    },
     /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-    Xrp { tx_json: String },
+    Xrp {
+        tx_json: String,
+    },
 }
 
 // ---------- Signable message types ----------
@@ -69,12 +78,22 @@ pub enum BtcMsgScheme {
 
 #[derive(uniffi::Enum, Clone, Debug)]
 pub enum SignableMessage {
-    EvmPersonalSign { message: String },
-    EvmTypedDataV4 { json: String },         // dynamic schema; String is intentional
+    EvmPersonalSign {
+        message: String,
+    },
+    EvmTypedDataV4 {
+        json: String,
+    }, // dynamic schema; String is intentional
     /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-    Solana { message_base64: String },
+    Solana {
+        message_base64: String,
+    },
     /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-    Bitcoin { message: String, address: String, scheme: BtcMsgScheme },
+    Bitcoin {
+        message: String,
+        address: String,
+        scheme: BtcMsgScheme,
+    },
 }
 
 // ---------- Output types ----------
@@ -127,12 +146,12 @@ impl From<JovaError> for FfiError {
         match e {
             JovaError::InvalidMnemonic => Self::InvalidMnemonic,
             JovaError::InvalidPassphrase => Self::InvalidPassphrase,
-            JovaError::InvalidAddress { chain } => {
-                Self::InvalidAddress { chain: parse_chain(&chain).unwrap_or(JovaChain::Ethereum) }
-            }
-            JovaError::UnsupportedChain(s) => {
-                Self::UnsupportedChain { chain: parse_chain(&s).unwrap_or(JovaChain::Ethereum) }
-            }
+            JovaError::InvalidAddress { chain } => Self::InvalidAddress {
+                chain: parse_chain(&chain).unwrap_or(JovaChain::Ethereum),
+            },
+            JovaError::UnsupportedChain(s) => Self::UnsupportedChain {
+                chain: parse_chain(&s).unwrap_or(JovaChain::Ethereum),
+            },
             JovaError::MalformedUnsignedTx { reason } => Self::MalformedUnsignedTx { reason },
             JovaError::MalformedSignableMessage { reason } => {
                 Self::MalformedSignableMessage { reason }
@@ -170,11 +189,15 @@ fn ffi_chain_to_core(c: &JovaChain) -> Result<jova_core::JovaChain, FfiError> {
         JovaChain::Arbitrum => jova_core::JovaChain::Arbitrum,
         JovaChain::Optimism => jova_core::JovaChain::Optimism,
         JovaChain::Base => jova_core::JovaChain::Base,
-        JovaChain::CustomEvm { chain_id } => {
-            jova_core::JovaChain::CustomEvm { chain_id: *chain_id }
-        }
+        JovaChain::CustomEvm { chain_id } => jova_core::JovaChain::CustomEvm {
+            chain_id: *chain_id,
+        },
         // Phase 2 chains: not yet in core; surface as UnsupportedChain.
-        other => return Err(FfiError::UnsupportedChain { chain: other.clone() }),
+        other => {
+            return Err(FfiError::UnsupportedChain {
+                chain: other.clone(),
+            });
+        }
     })
 }
 
@@ -220,13 +243,15 @@ fn ffi_unsigned_tx_to_core(t: UnsignedTx) -> Result<jova_core::UnsignedTx, FfiEr
                 .collect(),
         })),
         // Phase 2 chains: not yet in core; surface as UnsupportedChain.
-        UnsignedTx::Bitcoin { .. } => {
-            Err(FfiError::UnsupportedChain { chain: JovaChain::Bitcoin })
-        }
-        UnsignedTx::Solana { .. } => {
-            Err(FfiError::UnsupportedChain { chain: JovaChain::Solana })
-        }
-        UnsignedTx::Xrp { .. } => Err(FfiError::UnsupportedChain { chain: JovaChain::Xrp }),
+        UnsignedTx::Bitcoin { .. } => Err(FfiError::UnsupportedChain {
+            chain: JovaChain::Bitcoin,
+        }),
+        UnsignedTx::Solana { .. } => Err(FfiError::UnsupportedChain {
+            chain: JovaChain::Solana,
+        }),
+        UnsignedTx::Xrp { .. } => Err(FfiError::UnsupportedChain {
+            chain: JovaChain::Xrp,
+        }),
     }
 }
 
@@ -243,12 +268,12 @@ fn ffi_signable_message_to_core(
             Ok(jova_core::SignableMessage::EvmTypedDataV4 { json })
         }
         // Phase 2 chains: not yet in core; surface as UnsupportedChain.
-        SignableMessage::Solana { .. } => {
-            Err(FfiError::UnsupportedChain { chain: JovaChain::Solana })
-        }
-        SignableMessage::Bitcoin { .. } => {
-            Err(FfiError::UnsupportedChain { chain: JovaChain::Bitcoin })
-        }
+        SignableMessage::Solana { .. } => Err(FfiError::UnsupportedChain {
+            chain: JovaChain::Solana,
+        }),
+        SignableMessage::Bitcoin { .. } => Err(FfiError::UnsupportedChain {
+            chain: JovaChain::Bitcoin,
+        }),
     }
 }
 
@@ -257,7 +282,11 @@ fn ffi_signable_message_to_core(
 /// Generate a new random mnemonic. Returns the word string (12 or 24 words).
 #[uniffi::export]
 pub fn create_mnemonic(bits256: bool) -> String {
-    let strength = if bits256 { Strength::Bits256 } else { Strength::Bits128 };
+    let strength = if bits256 {
+        Strength::Bits256
+    } else {
+        Strength::Bits128
+    };
     jova_core::create_mnemonic(strength).words.clone()
 }
 
@@ -295,13 +324,19 @@ impl JovaWallet {
     /// Derive the canonical address for the given chain and account index.
     pub fn address(&self, chain: JovaChain, account: u32) -> Result<Address, FfiError> {
         let core_chain = ffi_chain_to_core(&chain)?;
-        Ok(core_address_to_ffi(self.inner.address(&core_chain, account).map_err(FfiError::from)?))
+        Ok(core_address_to_ffi(
+            self.inner
+                .address(&core_chain, account)
+                .map_err(FfiError::from)?,
+        ))
     }
 
     /// Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
     pub fn sign_tx(&self, tx: UnsignedTx) -> Result<SignedTx, FfiError> {
         let core_tx = ffi_unsigned_tx_to_core(tx)?;
-        Ok(core_signed_tx_to_ffi(self.inner.sign_tx(&core_tx).map_err(FfiError::from)?))
+        Ok(core_signed_tx_to_ffi(
+            self.inner.sign_tx(&core_tx).map_err(FfiError::from)?,
+        ))
     }
 
     /// Sign a message. Chain is implicit in the `SignableMessage` variant.

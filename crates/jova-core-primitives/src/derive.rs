@@ -53,7 +53,10 @@ pub fn derive_secp256k1(seed: &Seed, path: &DerivationPath) -> Result<XPrv, Deri
         chain_code = new_chain_code;
     }
 
-    Ok(XPrv { key: key_bytes, chain_code })
+    Ok(XPrv {
+        key: key_bytes,
+        chain_code,
+    })
 }
 
 /// BIP-32 CKD_priv: derive child private key from parent.
@@ -65,8 +68,7 @@ fn ckd_priv(
     parent_chain_code: &[u8; 32],
     index: u32,
 ) -> Result<([u8; 32], [u8; 32]), ()> {
-    let mut hmac =
-        HmacSha512::new_from_slice(parent_chain_code).map_err(|_| ())?;
+    let mut hmac = HmacSha512::new_from_slice(parent_chain_code).map_err(|_| ())?;
 
     if index >= HARDENED_OFFSET {
         // Hardened: data = 0x00 || parent_key || index_be
@@ -89,7 +91,9 @@ fn ckd_priv(
 
     // child_key = (il + parent_key) mod n  (secp256k1 tweak)
     let parent_sk = secp256k1::SecretKey::from_byte_array(*parent_key).map_err(|_| ())?;
-    let child_sk = parent_sk.add_tweak(&secp256k1::Scalar::from_be_bytes(il).map_err(|_| ())?).map_err(|_| ())?;
+    let child_sk = parent_sk
+        .add_tweak(&secp256k1::Scalar::from_be_bytes(il).map_err(|_| ())?)
+        .map_err(|_| ())?;
 
     let child_key: [u8; 32] = child_sk.secret_bytes();
     Ok((child_key, child_chain_code))

@@ -10,8 +10,7 @@
 //! Transaction signing smokes use a fixed private-key (one from secp256k1 test vectors).
 
 use jova_core_chains::{
-    evm::EvmSigner,
-    ChainError, ChainSigner, EvmUnsigned, SignableMessage, UnsignedTx,
+    ChainError, ChainSigner, EvmUnsigned, SignableMessage, UnsignedTx, evm::EvmSigner,
 };
 use jova_core_primitives::XPrv;
 
@@ -98,10 +97,12 @@ fn derive_address_is_checksummed() {
     // The expected address is verified externally against cast / EIP-55.
     // Key: 0000…0001 → address 0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf (from cast)
     let key = xprv_from_bytes([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
     ]);
-    let signer = EvmSigner { chain_label: "ethereum" };
+    let signer = EvmSigner {
+        chain_label: "ethereum",
+    };
     let addr = signer.derive_address(&key).unwrap();
     assert_eq!(addr.chain, "ethereum");
     // Must start with 0x and have length 42
@@ -110,31 +111,29 @@ fn derive_address_is_checksummed() {
     // Must be valid EIP-55 (mixed-case validates)
     assert!(jova_core_chains::evm::validate_address(&addr.value));
     // Known-good value: verified against alloy-signer-local's key_to_address test
-    assert_eq!(
-        addr.value,
-        "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
-    );
+    assert_eq!(addr.value, "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf");
 }
 
 #[test]
 fn derive_address_key_2() {
     // Private key 0x02 → address 0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF
     let key = xprv_from_bytes([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 2,
     ]);
-    let signer = EvmSigner { chain_label: "polygon" };
+    let signer = EvmSigner {
+        chain_label: "polygon",
+    };
     let addr = signer.derive_address(&key).unwrap();
     assert_eq!(addr.chain, "polygon");
-    assert_eq!(
-        addr.value,
-        "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF"
-    );
+    assert_eq!(addr.value, "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF");
 }
 
 #[test]
 fn validate_address_delegation() {
-    let signer = EvmSigner { chain_label: "ethereum" };
+    let signer = EvmSigner {
+        chain_label: "ethereum",
+    };
     assert!(signer.validate_address("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"));
     assert!(!signer.validate_address("0x1234"));
     assert!(!signer.validate_address("not-an-address"));
@@ -151,17 +150,19 @@ fn sign_eip1559_produces_valid_hex() {
     //   - raw_hex starts with "0x02" (type-2 envelope)
     //   - tx_hash is 66 chars (0x + 64 hex = 32-byte hash)
     let key = xprv_from_bytes([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
     ]);
-    let signer = EvmSigner { chain_label: "ethereum" };
+    let signer = EvmSigner {
+        chain_label: "ethereum",
+    };
     let tx = UnsignedTx::Evm(EvmUnsigned {
         chain_id: 1,
         nonce: 0,
         to: "0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF".into(),
         value: "1000000000000000000".into(), // 1 ETH in wei
         gas_limit: 21000,
-        max_fee_per_gas: "30000000000".into(),        // 30 gwei
+        max_fee_per_gas: "30000000000".into(), // 30 gwei
         max_priority_fee_per_gas: "1000000000".into(), // 1 gwei
         data: "0x".into(),
         access_list: vec![],
@@ -173,7 +174,11 @@ fn sign_eip1559_produces_valid_hex() {
         "EIP-1559 envelope must start with 0x02, got: {}",
         &result.raw_hex[..10]
     );
-    assert_eq!(result.tx_hash.len(), 66, "tx_hash must be 0x + 32 bytes hex");
+    assert_eq!(
+        result.tx_hash.len(),
+        66,
+        "tx_hash must be 0x + 32 bytes hex"
+    );
     assert!(result.tx_hash.starts_with("0x"));
 }
 
@@ -185,7 +190,9 @@ fn sign_tx_wrong_variant_errors() {
     // Since Evm is the only variant right now, we just confirm the happy path.
     // (The error path will be exercised once other chain variants are added.)
     let key = xprv_from_bytes([0u8; 32].map(|_| 1u8));
-    let signer = EvmSigner { chain_label: "ethereum" };
+    let signer = EvmSigner {
+        chain_label: "ethereum",
+    };
     let tx = UnsignedTx::Evm(EvmUnsigned {
         chain_id: 1,
         nonce: 0,
@@ -204,10 +211,12 @@ fn sign_tx_wrong_variant_errors() {
 #[test]
 fn sign_tx_malformed_to_address_errors() {
     let key = xprv_from_bytes([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
     ]);
-    let signer = EvmSigner { chain_label: "ethereum" };
+    let signer = EvmSigner {
+        chain_label: "ethereum",
+    };
     let tx = UnsignedTx::Evm(EvmUnsigned {
         chain_id: 1,
         nonce: 0,
@@ -233,21 +242,30 @@ fn sign_personal_message_format() {
     // Sign a known string and verify the format of the signature.
     // Exact value is asserted in Task 4's cast-derived vectors.
     let key = xprv_from_bytes([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
     ]);
-    let signer = EvmSigner { chain_label: "ethereum" };
+    let signer = EvmSigner {
+        chain_label: "ethereum",
+    };
     let msg = SignableMessage::EvmPersonalSign {
         message: "Hello Jova".into(),
     };
     let sig = signer.sign_message(&key, &msg).unwrap();
     // 0x + 32 bytes r + 32 bytes s + 1 byte v = 0x + 130 hex chars = 132 total
-    assert_eq!(sig.hex.len(), 132, "personal_sign signature must be 132 chars");
+    assert_eq!(
+        sig.hex.len(),
+        132,
+        "personal_sign signature must be 132 chars"
+    );
     assert!(sig.hex.starts_with("0x"));
     // v must be 27 or 28 (EIP-191 legacy recovery)
     let v_hex = &sig.hex[130..];
     let v = u8::from_str_radix(v_hex, 16).expect("v is hex");
-    assert!(v == 27 || v == 28, "personal_sign v must be 27 or 28, got {v}");
+    assert!(
+        v == 27 || v == 28,
+        "personal_sign v must be 27 or 28, got {v}"
+    );
 }
 
 // ── EIP-712 typed data smoke ──────────────────────────────────────────────────
@@ -288,10 +306,12 @@ fn sign_typed_data_v4_format() {
     }"#;
 
     let key = xprv_from_bytes([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1,
     ]);
-    let signer = EvmSigner { chain_label: "ethereum" };
+    let signer = EvmSigner {
+        chain_label: "ethereum",
+    };
     let msg = SignableMessage::EvmTypedDataV4 {
         json: typed_data_json.into(),
     };

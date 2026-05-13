@@ -11,13 +11,19 @@ fn validates_official_bip39_test_vector() {
 fn rejects_invalid_checksum() {
     let words = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon";
     // 12x abandon = wrong checksum
-    assert!(matches!(Mnemonic::validate(words, ""), Err(MnemonicError::InvalidChecksum)));
+    assert!(matches!(
+        Mnemonic::validate(words, ""),
+        Err(MnemonicError::InvalidChecksum)
+    ));
 }
 
 #[test]
 fn rejects_unknown_word() {
     let words = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon zzzzz";
-    assert!(matches!(Mnemonic::validate(words, ""), Err(MnemonicError::InvalidWord(_))));
+    assert!(matches!(
+        Mnemonic::validate(words, ""),
+        Err(MnemonicError::InvalidWord(_))
+    ));
 }
 
 #[test]

@@ -1,4 +1,4 @@
-use jova_core_primitives::{keccak_address, XPrv};
+use jova_core_primitives::{XPrv, keccak_address};
 use sha3::{Digest, Keccak256};
 
 /// Derive the EIP-55 checksum address for the given extended private key.

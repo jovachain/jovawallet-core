@@ -4,7 +4,7 @@
 //! parser robustness across large input spaces.  All properties hold for any
 //! input — they complement the exact-value vector tests, not replace them.
 
-use jova_core::{is_valid_address, JovaChain, JovaWallet};
+use jova_core::{JovaChain, JovaWallet, is_valid_address};
 use proptest::prelude::*;
 
 const SEED_MNEMONIC: &str =

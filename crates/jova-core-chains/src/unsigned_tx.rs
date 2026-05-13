@@ -13,11 +13,11 @@ pub struct EvmUnsigned {
     pub chain_id: u64,
     pub nonce: u64,
     pub to: String,
-    pub value: String,                   // wei, decimal string
+    pub value: String, // wei, decimal string
     pub gas_limit: u64,
     pub max_fee_per_gas: String,
     pub max_priority_fee_per_gas: String,
-    pub data: String,                    // 0x-prefixed hex
+    pub data: String, // 0x-prefixed hex
     #[serde(default)]
     pub access_list: Vec<AccessListItem>,
 }

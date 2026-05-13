@@ -12,7 +12,7 @@ mod mnemonic;
 mod path;
 mod seed;
 
-pub use derive::{derive_secp256k1, keccak_address, DeriveError};
+pub use derive::{DeriveError, derive_secp256k1, keccak_address};
 pub use error::MnemonicError;
 pub use keys::XPrv;
 pub use mnemonic::{Mnemonic, Strength};

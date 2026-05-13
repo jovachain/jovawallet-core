@@ -29,8 +29,8 @@ pub fn sign(key: &XPrv, message: &str) -> Result<String, ChainError> {
 /// layout with v = 27 + y_parity — exactly the EIP-191/EIP-712 format.
 pub(crate) fn sign_hash(key: &XPrv, hash: &[u8]) -> Result<String, ChainError> {
     use alloy::primitives::B256;
-    use alloy::signers::local::LocalSigner;
     use alloy::signers::SignerSync;
+    use alloy::signers::local::LocalSigner;
 
     let hash_b256: B256 = B256::from_slice(hash);
     let signer = LocalSigner::from_bytes(&B256::from_slice(key.private_key_bytes()))

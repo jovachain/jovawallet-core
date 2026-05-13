@@ -33,4 +33,4 @@ pub use jova_core_chains::{
     AccessListItem, Address, EvmUnsigned, SignableMessage, Signature, SignedTx, UnsignedTx,
 };
 #[cfg(feature = "chains")]
-pub use wallet::{is_valid_address, JovaWallet};
+pub use wallet::{JovaWallet, is_valid_address};

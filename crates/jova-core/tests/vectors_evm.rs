@@ -11,7 +11,10 @@ use serde_json::Value;
 fn load_vectors() -> Vec<Value> {
     let raw = include_str!("../../../spec/test-vectors.json");
     let v: Value = serde_json::from_str(raw).expect("spec/test-vectors.json is valid JSON");
-    v["vectors"].as_array().expect("'vectors' array exists").clone()
+    v["vectors"]
+        .as_array()
+        .expect("'vectors' array exists")
+        .clone()
 }
 
 // ── address vectors ──────────────────────────────────────────────────────────
@@ -38,7 +41,9 @@ fn evm_address_vectors() {
         let passphrase = v["input"]["passphrase"].as_str().unwrap_or("");
         let chain: JovaChain =
             serde_json::from_value(chain_val.clone()).expect("chain deserialises");
-        let expected = v["expected"]["address"].as_str().expect("expected.address exists");
+        let expected = v["expected"]["address"]
+            .as_str()
+            .expect("expected.address exists");
 
         let wallet = JovaWallet::from_mnemonic(mnemonic, passphrase)
             .unwrap_or_else(|e| panic!("vector {id}: from_mnemonic failed: {e}"));
@@ -74,8 +79,9 @@ fn evm_sign_tx_vectors() {
         let expected_hex = v["expected"]["signed_hex"]
             .as_str()
             .expect("expected.signed_hex exists");
-        let expected_hash =
-            v["expected"]["tx_hash"].as_str().expect("expected.tx_hash exists");
+        let expected_hash = v["expected"]["tx_hash"]
+            .as_str()
+            .expect("expected.tx_hash exists");
 
         let wallet = JovaWallet::from_mnemonic(mnemonic, passphrase)
             .unwrap_or_else(|e| panic!("vector {id}: from_mnemonic failed: {e}"));
@@ -130,7 +136,10 @@ fn evm_sign_message_vectors() {
         );
         ran += 1;
     }
-    assert!(ran >= 2, "expected at least 2 sign_message vectors, ran {ran}");
+    assert!(
+        ran >= 2,
+        "expected at least 2 sign_message vectors, ran {ran}"
+    );
 }
 
 // ── error vectors ────────────────────────────────────────────────────────────
@@ -149,7 +158,9 @@ fn evm_error_vectors() {
         let expected_variant = v["expected"]["error_variant"]
             .as_str()
             .expect("expected.error_variant exists");
-        let expected_reason = v["expected"]["reason"].as_str().expect("expected.reason exists");
+        let expected_reason = v["expected"]["reason"]
+            .as_str()
+            .expect("expected.reason exists");
 
         let wallet = JovaWallet::from_mnemonic(mnemonic, passphrase)
             .unwrap_or_else(|e| panic!("vector {id}: from_mnemonic failed: {e}"));
@@ -160,16 +171,15 @@ fn evm_error_vectors() {
 
         let result = wallet.sign_tx(&unsigned);
         match result {
-            Ok(_) => panic!("vector {id}: expected error {expected_variant}/{expected_reason}, got Ok"),
+            Ok(_) => {
+                panic!("vector {id}: expected error {expected_variant}/{expected_reason}, got Ok")
+            }
             Err(JovaError::MalformedUnsignedTx { reason }) => {
                 assert_eq!(
                     expected_variant, "MalformedUnsignedTx",
                     "vector {id}: wrong error variant"
                 );
-                assert_eq!(
-                    reason, expected_reason,
-                    "vector {id}: wrong error reason"
-                );
+                assert_eq!(reason, expected_reason, "vector {id}: wrong error reason");
             }
             Err(other) => {
                 panic!("vector {id}: wrong error type, got: {other}");

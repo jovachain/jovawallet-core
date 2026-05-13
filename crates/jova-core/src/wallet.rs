@@ -1,7 +1,7 @@
 use jova_core_chains::{
-    evm::EvmSigner, Address, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx,
+    Address, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx, evm::EvmSigner,
 };
-use jova_core_primitives::{derive_secp256k1, DerivationPath, Mnemonic, Seed};
+use jova_core_primitives::{DerivationPath, Mnemonic, Seed, derive_secp256k1};
 
 use crate::chain::JovaChain;
 use crate::error::JovaError;
@@ -36,13 +36,14 @@ impl JovaWallet {
                 let chain_label = chain_label_from_evm_chain_id(evm.chain_id);
                 // We need a `&'static str` for EvmSigner; map to one.
                 let static_label = static_chain_label(evm.chain_id);
-                let signer = EvmSigner { chain_label: static_label };
+                let signer = EvmSigner {
+                    chain_label: static_label,
+                };
                 let xprv = self.derive_path("m/44'/60'/0'/0/0")?;
                 let mut signed = signer.sign_tx(&xprv, unsigned)?;
                 signed.chain = chain_label;
                 Ok(signed)
-            }
-            // Phase 2+ adds Bitcoin, Solana, XRP arms here.
+            } // Phase 2+ adds Bitcoin, Solana, XRP arms here.
         }
     }
 
@@ -50,11 +51,12 @@ impl JovaWallet {
     pub fn sign_message(&self, msg: &SignableMessage) -> Result<Signature, JovaError> {
         match msg {
             SignableMessage::EvmPersonalSign { .. } | SignableMessage::EvmTypedDataV4 { .. } => {
-                let signer = EvmSigner { chain_label: "ethereum" };
+                let signer = EvmSigner {
+                    chain_label: "ethereum",
+                };
                 let xprv = self.derive_path("m/44'/60'/0'/0/0")?;
                 Ok(signer.sign_message(&xprv, msg)?)
-            }
-            // Phase 2+ adds Solana and Bitcoin arms.
+            } // Phase 2+ adds Solana and Bitcoin arms.
         }
     }
 
@@ -62,7 +64,9 @@ impl JovaWallet {
         if chain.evm_chain_id().is_none() {
             return Err(JovaError::UnsupportedChain(format!("{:?}", chain)));
         }
-        Ok(EvmSigner { chain_label: chain.label() })
+        Ok(EvmSigner {
+            chain_label: chain.label(),
+        })
     }
 
     fn derive_for(&self, chain: &JovaChain) -> Result<jova_core_primitives::XPrv, JovaError> {
@@ -70,10 +74,12 @@ impl JovaWallet {
     }
 
     fn derive_path(&self, path_str: &str) -> Result<jova_core_primitives::XPrv, JovaError> {
-        let path = DerivationPath::parse(path_str)
-            .map_err(|_| JovaError::Internal { reason: "bad_path".into() })?;
-        derive_secp256k1(&self.seed, &path)
-            .map_err(|_| JovaError::Internal { reason: "derive_failed".into() })
+        let path = DerivationPath::parse(path_str).map_err(|_| JovaError::Internal {
+            reason: "bad_path".into(),
+        })?;
+        derive_secp256k1(&self.seed, &path).map_err(|_| JovaError::Internal {
+            reason: "derive_failed".into(),
+        })
     }
 }
 
