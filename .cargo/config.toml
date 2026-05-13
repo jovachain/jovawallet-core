@@ -3,22 +3,23 @@
 # wasm32-unknown-unknown C toolchain workarounds
 # ──────────────────────────────────────────────
 # secp256k1-sys 0.11.0 compiles libsecp256k1 C code for WASM using a bundled
-# wasm-sysroot.  Its wasm/wasm-sysroot/string.h stubs are incomplete: they
-# declare memcpy/memset/memcmp but omit memmove (used in hsort_impl.h since
-# secp256k1 v0.28+).  Apple's clang (Xcode) also lacks the wasm32-unknown-unknown
-# backend entirely.
+# wasm-sysroot. Its wasm/wasm-sysroot/string.h declares memcpy/memset/memcmp
+# but omits memmove (used in hsort_impl.h since secp256k1 v0.28+). The CFLAGS
+# below defines memmove as __builtin_memmove so any C compiler targeting wasm32
+# (Apple clang via Homebrew LLVM on macOS, or system clang on Linux CI) can
+# compile the code.
 #
-# Fix: use Homebrew LLVM which has the wasm32 backend, and define memmove via a
-# compiler flag so the missing stub doesn't cause a hard error.
-#
-# Install prerequisites (once per developer machine):
-#   brew install llvm
-#   brew install wasi-libc   # not strictly needed; llvm alone suffices with -D workaround
+# C compiler selection is host-specific and is NOT pinned here:
+#   - On Linux (CI): system clang on PATH supports wasm32 natively. No override needed.
+#   - On macOS (dev): Apple's clang lacks the wasm32 backend. Install Homebrew LLVM
+#     (`brew install llvm`) and either run `bindings/wasm/scripts/build-wasm.sh`
+#     (which exports CC_wasm32_unknown_unknown automatically) or manually:
+#         export CC_wasm32_unknown_unknown="$(brew --prefix llvm)/bin/clang"
+#     before invoking cargo for wasm32 targets.
 #
 # Phase 6 note: when we revisit WASM signing (full JovaWallet surface), consider
 # switching secp256k1 to a pure-Rust alternative (e.g. k256) for WASM, or upgrading
 # to a secp256k1-sys release that has the corrected wasm sysroot.
 
 [env]
-CC_wasm32_unknown_unknown   = { value = "/opt/homebrew/opt/llvm/bin/clang", force = false }
 CFLAGS_wasm32_unknown_unknown = { value = "-Dmemmove=__builtin_memmove", force = false }
