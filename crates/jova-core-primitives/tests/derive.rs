@@ -1,4 +1,6 @@
-use jova_core_primitives::{DerivationPath, Mnemonic, derive_secp256k1, keccak_address};
+use jova_core_primitives::DerivationPath;
+#[cfg(not(miri))]
+use jova_core_primitives::{Mnemonic, derive_secp256k1, keccak_address};
 
 #[test]
 fn parses_canonical_eth_path() {
@@ -33,6 +35,7 @@ fn parses_hardened_h_suffix() {
 }
 
 #[test]
+#[cfg(not(miri))] // secp256k1 uses extern static (C FFI); miri cannot analyse it
 fn derives_eth_xprv_from_known_seed() {
     // BIP-39 vector: abandon...about with passphrase "TREZOR".
     let words = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
@@ -51,6 +54,7 @@ fn derives_eth_xprv_from_known_seed() {
 }
 
 #[test]
+#[cfg(not(miri))] // secp256k1 uses extern static (C FFI); miri cannot analyse it
 fn xprv_debug_redacted() {
     let words = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
     let seed = Mnemonic::to_seed(words, "").expect("seed");
@@ -61,6 +65,7 @@ fn xprv_debug_redacted() {
 }
 
 #[test]
+#[cfg(not(miri))] // secp256k1 uses extern static (C FFI); miri cannot analyse it
 fn xprv_not_clone_verify_via_private_key_bytes() {
     // This test confirms XPrv can be used without Clone — we take a reference to private_key_bytes.
     let words = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
@@ -72,6 +77,7 @@ fn xprv_not_clone_verify_via_private_key_bytes() {
 }
 
 #[test]
+#[cfg(not(miri))] // secp256k1 uses extern static (C FFI); miri cannot analyse it
 fn keccak_address_length() {
     // All-zero public key point won't produce a valid secp256k1 key but we can test
     // the keccak function directly using known Ethereum tooling output.
