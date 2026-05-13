@@ -1,0 +1,34 @@
+[package]
+name = "jova-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+# Fuzz crates are NOT workspace members — cargo-fuzz manages this crate directly.
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+jova-core = { path = "../crates/jova-core", default-features = true }
+serde_json = { version = "1", default-features = false, features = ["alloc"] }
+
+[[bin]]
+name = "fuzz_eip1559_decode"
+path = "fuzz_targets/fuzz_eip1559_decode.rs"
+test = false
+doc  = false
+
+[[bin]]
+name = "fuzz_eip712_typed"
+path = "fuzz_targets/fuzz_eip712_typed.rs"
+test = false
+doc  = false
+
+[[bin]]
+name = "fuzz_address_parse"
+path = "fuzz_targets/fuzz_address_parse.rs"
+test = false
+doc  = false
