@@ -12,6 +12,6 @@ crate-type = ["lib", "staticlib", "cdylib"]
 name = "jova_core_ffi"
 
 [dependencies]
-jova-core.workspace = true
+jova-core = { workspace = true, features = ["chains"] }
 uniffi.workspace = true
 thiserror.workspace = true

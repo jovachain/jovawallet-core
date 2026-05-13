@@ -105,16 +105,6 @@ fn static_chain_label(id: u64) -> &'static str {
     }
 }
 
-/// Generate a new random mnemonic with the given bit strength.
-pub fn create_mnemonic(strength: jova_core_primitives::Strength) -> Mnemonic {
-    Mnemonic::generate(strength)
-}
-
-/// Return `true` if `words` is a valid BIP-39 mnemonic with correct checksum.
-pub fn is_valid_mnemonic(words: &str, passphrase: &str) -> bool {
-    Mnemonic::validate(words, passphrase).is_ok()
-}
-
 /// Return `true` if `addr` is a valid address for `chain`.
 pub fn is_valid_address(addr: &str, chain: &JovaChain) -> bool {
     if chain.evm_chain_id().is_some() {

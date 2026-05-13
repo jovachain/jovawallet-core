@@ -17,6 +17,9 @@ crate-type = ["cdylib"]
 wasm-opt = false
 
 [dependencies]
+# jova-core with no `chains` feature: avoids secp256k1-sys (a C crate) which
+# cannot compile for wasm32-unknown-unknown on macOS with Apple clang.
+# Phase 6 will re-enable chain signing once a wasm-compatible signing path exists.
 jova-core.workspace = true
 wasm-bindgen.workspace = true
 serde-wasm-bindgen.workspace = true

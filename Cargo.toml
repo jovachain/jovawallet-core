@@ -20,7 +20,7 @@ authors = ["Jovachain SDK <sdk@jovachain.io>"]
 # Inter-crate
 jova-core-primitives = { path = "crates/jova-core-primitives", version = "0.0.1" }
 jova-core-chains     = { path = "crates/jova-core-chains",     version = "0.0.1" }
-jova-core            = { path = "crates/jova-core",            version = "0.0.1" }
+jova-core            = { path = "crates/jova-core",            version = "0.0.1", default-features = false }
 
 # Crypto primitives (versions and features confirmed by Phase -1 spike, 2026-05-11).
 # NOTE: secp256k1 must NOT include `global-context` here — it requires `std` and would
