@@ -25,6 +25,10 @@ pkg/
 dist/
 *.tgz
 
+# Fuzz corpora and artifacts (can grow very large)
+fuzz/corpus/
+fuzz/artifacts/
+
 # OS
 .DS_Store
 Thumbs.db

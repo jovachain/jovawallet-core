@@ -1,0 +1,48 @@
+{
+  "mnemonics": {
+    "abandon": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+    "trezor":  "ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic"
+  },
+  "chains": ["ethereum", "polygon", "bsc", "arbitrum", "optimism", "base"],
+  "address_chains": ["ethereum", "polygon", "bsc"],
+  "txs": {
+    "simple_transfer":   { "chainId": 1,   "nonce": 0, "to": "0x0000000000000000000000000000000000000000", "value": "1000000000000000000", "gasLimit": 21000,  "maxFeePerGas": "30000000000", "maxPriorityFeePerGas": "2000000000",  "data": "0x" },
+    "erc20_transfer":    { "chainId": 1,   "nonce": 7, "to": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", "value": "0",                  "gasLimit": 65000,  "maxFeePerGas": "30000000000", "maxPriorityFeePerGas": "2000000000",  "data": "0xa9059cbb000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000de0b6b3a7640000" },
+    "with_access_list":  { "chainId": 1,   "nonce": 1, "to": "0x0000000000000000000000000000000000001234", "value": "0",                  "gasLimit": 100000, "maxFeePerGas": "30000000000", "maxPriorityFeePerGas": "2000000000",  "data": "0x", "accessList": [{ "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", "storageKeys": ["0x0000000000000000000000000000000000000000000000000000000000000000"] }] },
+    "polygon_transfer":  { "chainId": 137, "nonce": 0, "to": "0x0000000000000000000000000000000000000000", "value": "1000000000000000000", "gasLimit": 21000,  "maxFeePerGas": "60000000000", "maxPriorityFeePerGas": "30000000000", "data": "0x" }
+  },
+  "messages": {
+    "eip191_hello": "Hello, Jova",
+    "eip712_permit": {
+      "types": {
+        "EIP712Domain": [
+          { "name": "name",              "type": "string"  },
+          { "name": "version",           "type": "string"  },
+          { "name": "chainId",           "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Permit": [
+          { "name": "owner",    "type": "address" },
+          { "name": "spender",  "type": "address" },
+          { "name": "value",    "type": "uint256" },
+          { "name": "nonce",    "type": "uint256" },
+          { "name": "deadline", "type": "uint256" }
+        ]
+      },
+      "primaryType": "Permit",
+      "domain": {
+        "name": "USD Coin",
+        "version": "2",
+        "chainId": 1,
+        "verifyingContract": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+      },
+      "message": {
+        "owner":    "0x9858EfFD232B4033E47d90003D41EC34EcaEda94",
+        "spender":  "0x0000000000000000000000000000000000000001",
+        "value":    "1000000000000000000",
+        "nonce":    0,
+        "deadline": 1893456000
+      }
+    }
+  }
+}

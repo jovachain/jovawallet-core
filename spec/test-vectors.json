@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "vectors": [
     {
       "id": "phase0.mnemonic_validation_neg.gibberish",
@@ -12,6 +12,338 @@
         "valid": false
       },
       "source": "Phase 0 hello-world",
+      "source_url": "internal"
+    },
+
+    {
+      "id": "phase1.address.abandon.ethereum",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "ethereum" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "PRIV=$(cast wallet derive-private-key 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about' --mnemonic-derivation-path \"m/44'/60'/0'/0/0\") && cast wallet address --private-key \"$PRIV\""
+    },
+
+    {
+      "id": "phase1.address.abandon.polygon",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "polygon" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — EVM chains share derivation path in v1"
+    },
+
+    {
+      "id": "phase1.address.abandon.bsc",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "bsc" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — EVM chains share derivation path in v1"
+    },
+
+    {
+      "id": "phase1.address.trezor.ethereum",
+      "kind": "address",
+      "input": {
+        "mnemonic": "ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic",
+        "passphrase": "",
+        "chain": { "kind": "ethereum" }
+      },
+      "expected": {
+        "address": "0xd01D6027860c2E2e37295d3dE4B5a5f46F68d52f"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "PRIV=$(cast wallet derive-private-key 'ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic' --mnemonic-derivation-path \"m/44'/60'/0'/0/0\") && cast wallet address --private-key \"$PRIV\""
+    },
+
+    {
+      "id": "phase1.address.trezor.polygon",
+      "kind": "address",
+      "input": {
+        "mnemonic": "ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic",
+        "passphrase": "",
+        "chain": { "kind": "polygon" }
+      },
+      "expected": {
+        "address": "0xd01D6027860c2E2e37295d3dE4B5a5f46F68d52f"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — EVM chains share derivation path in v1"
+    },
+
+    {
+      "id": "phase1.address.trezor.bsc",
+      "kind": "address",
+      "input": {
+        "mnemonic": "ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic",
+        "passphrase": "",
+        "chain": { "kind": "bsc" }
+      },
+      "expected": {
+        "address": "0xd01D6027860c2E2e37295d3dE4B5a5f46F68d52f"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — EVM chains share derivation path in v1"
+    },
+
+    {
+      "id": "phase1.sign_tx.abandon.simple_transfer",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 1,
+          "nonce": 0,
+          "to": "0x0000000000000000000000000000000000000000",
+          "value": "1000000000000000000",
+          "gasLimit": 21000,
+          "maxFeePerGas": "30000000000",
+          "maxPriorityFeePerGas": "2000000000",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f873018084773594008506fc23ac00825208940000000000000000000000000000000000000000880de0b6b3a764000080c080a05fe626dc23ad3cbd11b7e98f7225b33403e935fc84a62ce1810b6548bb4d2021a05f73222c15dc6a02b57122c52716ceb8fe8911c69fa241ab4898dd08dd87afd3",
+        "tx_hash": "0x479fce0816d56108ebc5398686fdad61595c0b7a14dfaa285e81db837aa67450"
+      },
+      "source": "cast mktx",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast mktx --private-key $PRIV --chain 1 --nonce 0 --gas-limit 21000 --gas-price 30000000000 --priority-gas-price 2000000000 --value 1000000000000000000 0x0000000000000000000000000000000000000000"
+    },
+
+    {
+      "id": "phase1.sign_tx.abandon.erc20_transfer",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 1,
+          "nonce": 7,
+          "to": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          "value": "0",
+          "gasLimit": 65000,
+          "maxFeePerGas": "30000000000",
+          "maxPriorityFeePerGas": "2000000000",
+          "data": "0xa9059cbb000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000de0b6b3a7640000",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f8b0010784773594008506fc23ac0082fde894a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4880b844a9059cbb000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000de0b6b3a7640000c080a060d10bc8c9bfa15a71266fbdeee87f70f9488c0b4b2f491c6521858027f37645a06231c0c7dfb3a4732272b5f838ad47ea4d1e3e3d61f6640ba2514ea3e25fed5e",
+        "tx_hash": "0xff04e74664a248201c87201dabf57b6ecb5a9b08e5f0d04c932993f5e11aef40"
+      },
+      "source": "cast mktx",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast mktx --private-key $PRIV --chain 1 --nonce 7 --gas-limit 65000 --gas-price 30000000000 --priority-gas-price 2000000000 --value 0 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48 0xa9059cbb..."
+    },
+
+    {
+      "id": "phase1.sign_tx.abandon.with_access_list",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 1,
+          "nonce": 1,
+          "to": "0x0000000000000000000000000000000000001234",
+          "value": "0",
+          "gasLimit": 100000,
+          "maxFeePerGas": "30000000000",
+          "maxPriorityFeePerGas": "2000000000",
+          "data": "0x",
+          "accessList": [
+            {
+              "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+              "storage_keys": ["0x0000000000000000000000000000000000000000000000000000000000000000"]
+            }
+          ]
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f8a5010184773594008506fc23ac00830186a09400000000000000000000000000000000000012348080f838f794a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48e1a0000000000000000000000000000000000000000000000000000000000000000001a051d53ef458a79cca8e69f74635c0df9623e6b031a56a892fe10b9ac65b4efc52a07dc1da91d07526db2ecbe9b13ae4b6329606c31285b9e622ca94af1abd2f1f3e",
+        "tx_hash": "0xdbd8bfb6411cfda1262bbdbc29a7768b3c82eb5813db10f0f34d3003a62b057a"
+      },
+      "source": "cast mktx",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast mktx --private-key $PRIV --chain 1 --nonce 1 --gas-limit 100000 --gas-price 30000000000 --priority-gas-price 2000000000 --value 0 --access-list '[{\"address\":\"0xA0b86...\",\"storageKeys\":[\"0x0000...\"]}]' 0x0000000000000000000000000000000000001234"
+    },
+
+    {
+      "id": "phase1.sign_tx.abandon.polygon_transfer",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 137,
+          "nonce": 0,
+          "to": "0x0000000000000000000000000000000000000000",
+          "value": "1000000000000000000",
+          "gasLimit": 21000,
+          "maxFeePerGas": "60000000000",
+          "maxPriorityFeePerGas": "30000000000",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f8758189808506fc23ac00850df8475800825208940000000000000000000000000000000000000000880de0b6b3a764000080c080a07291b6927be8eba121b666bec16191f708c5bd714a6a60dea8bfe29bf39936dda02e5f78157a088cbbafee4de857ef45f27e5e6b5cd381a7dac3b1667c639f8f70",
+        "tx_hash": "0xd08ccf4c4aceb9ff9b4b3513aec63ccdca1cf649ec8c3bddbde74dcf6674edd1"
+      },
+      "source": "cast mktx",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast mktx --private-key $PRIV --chain 137 --nonce 0 --gas-limit 21000 --gas-price 60000000000 --priority-gas-price 30000000000 --value 1000000000000000000 0x0000000000000000000000000000000000000000"
+    },
+
+    {
+      "id": "phase1.sign_message.abandon.eip191_hello",
+      "kind": "sign_message",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "message": {
+          "kind": "evmPersonalSign",
+          "message": "Hello, Jova"
+        }
+      },
+      "expected": {
+        "signature": "0xc620e2ff3daf18bdcc1770abf92990da85fd4fbd0f2fed8f526b876ab23f335526175c83a513cd1acc5a477778308ffa203f5c8882945e026d4e449837cbe8c21c"
+      },
+      "source": "cast wallet sign",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast wallet sign --private-key $PRIV 'Hello, Jova'"
+    },
+
+    {
+      "id": "phase1.sign_message.abandon.eip712_permit",
+      "kind": "sign_message",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "message": {
+          "kind": "evmTypedDataV4",
+          "json": "{\"types\":{\"EIP712Domain\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"version\",\"type\":\"string\"},{\"name\":\"chainId\",\"type\":\"uint256\"},{\"name\":\"verifyingContract\",\"type\":\"address\"}],\"Permit\":[{\"name\":\"owner\",\"type\":\"address\"},{\"name\":\"spender\",\"type\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\"},{\"name\":\"nonce\",\"type\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\"}]},\"primaryType\":\"Permit\",\"domain\":{\"name\":\"USD Coin\",\"version\":\"2\",\"chainId\":1,\"verifyingContract\":\"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\"},\"message\":{\"owner\":\"0x9858EfFD232B4033E47d90003D41EC34EcaEda94\",\"spender\":\"0x0000000000000000000000000000000000000001\",\"value\":\"1000000000000000000\",\"nonce\":0,\"deadline\":1893456000}}"
+        }
+      },
+      "expected": {
+        "signature": "0x7c9ce98ee9e4945f6dda97085230aaa0ca550ef54fa7e5a76c21574f4c8f2e23496e4aaa312db034bfe0164d0865f893fa0fbab4de8d9e318984672b20a83b751b"
+      },
+      "source": "cast wallet sign --data --from-file",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast wallet sign --private-key $PRIV --data --from-file /tmp/permit_typed_data.json"
+    },
+
+    {
+      "id": "phase1.error.evm_to_address_invalid",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 1,
+          "nonce": 0,
+          "to": "not_an_address",
+          "value": "0",
+          "gasLimit": 21000,
+          "maxFeePerGas": "30000000000",
+          "maxPriorityFeePerGas": "2000000000",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "evm_to_address_invalid"
+      },
+      "source": "internal — malformed by construction",
+      "source_url": "internal"
+    },
+
+    {
+      "id": "phase1.error.evm_decimal_string_invalid",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 1,
+          "nonce": 0,
+          "to": "0x0000000000000000000000000000000000000000",
+          "value": "not_a_number",
+          "gasLimit": 21000,
+          "maxFeePerGas": "30000000000",
+          "maxPriorityFeePerGas": "2000000000",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "evm_decimal_string_invalid"
+      },
+      "source": "internal — malformed by construction",
+      "source_url": "internal"
+    },
+
+    {
+      "id": "phase1.error.evm_data_not_hex",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 1,
+          "nonce": 0,
+          "to": "0x0000000000000000000000000000000000000000",
+          "value": "0",
+          "gasLimit": 21000,
+          "maxFeePerGas": "30000000000",
+          "maxPriorityFeePerGas": "2000000000",
+          "data": "not_hex_data",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "evm_data_not_hex"
+      },
+      "source": "internal — malformed by construction",
       "source_url": "internal"
     }
   ]

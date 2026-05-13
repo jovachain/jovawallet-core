@@ -20,7 +20,7 @@ authors = ["Jovachain SDK <sdk@jovachain.io>"]
 # Inter-crate
 jova-core-primitives = { path = "crates/jova-core-primitives", version = "0.0.1" }
 jova-core-chains     = { path = "crates/jova-core-chains",     version = "0.0.1" }
-jova-core            = { path = "crates/jova-core",            version = "0.0.1" }
+jova-core            = { path = "crates/jova-core",            version = "0.0.1", default-features = false }
 
 # Crypto primitives (versions and features confirmed by Phase -1 spike, 2026-05-11).
 # NOTE: secp256k1 must NOT include `global-context` here — it requires `std` and would
@@ -39,7 +39,7 @@ zeroize       = { version = "1.8",  default-features = false, features = ["alloc
 subtle        = { version = "2.6",  default-features = false }
 
 # Chain crates — versions confirmed by Phase -1 spike (2026-05-11).
-alloy             = { version = "2.0",  default-features = false, features = ["consensus", "signer-local", "sol-types", "dyn-abi"] }
+alloy             = { version = "2.0",  default-features = false, features = ["consensus", "signer-local", "sol-types", "dyn-abi", "eips", "eip712"] }
 # NOTE: bdk_wallet 3.0 with `default-features = false` alone fails because miniscript
 # transitively requires `std`. Explicit `features = ["std"]` is required.
 bdk_wallet        = { version = "3.0",  default-features = false, features = ["std"] }

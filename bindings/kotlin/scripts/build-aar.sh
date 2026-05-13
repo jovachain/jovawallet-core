@@ -10,6 +10,19 @@ cd "$(dirname "$0")/../../.."
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_HOME/ndk/29.0.14206865}"
 
+# Locate Java on macOS when the shell hasn't sourced .zshrc (e.g. in the Claude
+# Code harness). Prefer JAVA_HOME if already set; fall back to Android Studio's
+# bundled JBR, then /usr/libexec/java_home.
+if [ -z "${JAVA_HOME:-}" ]; then
+  AS_JBR="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+  if [ -d "$AS_JBR" ]; then
+    export JAVA_HOME="$AS_JBR"
+  elif command -v /usr/libexec/java_home &>/dev/null; then
+    export JAVA_HOME="$(/usr/libexec/java_home 2>/dev/null || true)"
+  fi
+fi
+[ -n "${JAVA_HOME:-}" ] && export PATH="$JAVA_HOME/bin:$PATH"
+
 # Cross-compile to all 4 Android ABIs. Output goes to the jniLibs source set.
 cargo ndk \
   -t arm64-v8a \
