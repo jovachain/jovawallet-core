@@ -243,6 +243,46 @@ typedef void (*UniffiForeignFutureCompleteVoid)(uint64_t, UniffiForeignFutureRes
     );
 
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_CLONE_JOVAWALLET
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_CLONE_JOVAWALLET
+uint64_t uniffi_jova_core_ffi_fn_clone_jovawallet(uint64_t handle, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FREE_JOVAWALLET
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FREE_JOVAWALLET
+void uniffi_jova_core_ffi_fn_free_jovawallet(uint64_t handle, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_CONSTRUCTOR_JOVAWALLET_FROM_MNEMONIC
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_CONSTRUCTOR_JOVAWALLET_FROM_MNEMONIC
+uint64_t uniffi_jova_core_ffi_fn_constructor_jovawallet_from_mnemonic(RustBuffer words, RustBuffer passphrase, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_ADDRESS
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_ADDRESS
+RustBuffer uniffi_jova_core_ffi_fn_method_jovawallet_address(uint64_t ptr, RustBuffer chain, uint32_t account, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_SIGN_MESSAGE
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_SIGN_MESSAGE
+RustBuffer uniffi_jova_core_ffi_fn_method_jovawallet_sign_message(uint64_t ptr, RustBuffer msg, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_SIGN_TX
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_SIGN_TX
+RustBuffer uniffi_jova_core_ffi_fn_method_jovawallet_sign_tx(uint64_t ptr, RustBuffer tx, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FUNC_CREATE_MNEMONIC
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FUNC_CREATE_MNEMONIC
+RustBuffer uniffi_jova_core_ffi_fn_func_create_mnemonic(int8_t bits256, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FUNC_IS_VALID_ADDRESS
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FUNC_IS_VALID_ADDRESS
+int8_t uniffi_jova_core_ffi_fn_func_is_valid_address(RustBuffer addr, RustBuffer chain, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FUNC_IS_VALID_MNEMONIC
 #define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FUNC_IS_VALID_MNEMONIC
 int8_t uniffi_jova_core_ffi_fn_func_is_valid_mnemonic(RustBuffer words, RustBuffer passphrase, RustCallStatus *_Nonnull out_status
@@ -508,9 +548,45 @@ void ffi_jova_core_ffi_rust_future_free_void(uint64_t handle
 void ffi_jova_core_ffi_rust_future_complete_void(uint64_t handle, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_FUNC_CREATE_MNEMONIC
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_FUNC_CREATE_MNEMONIC
+uint16_t uniffi_jova_core_ffi_checksum_func_create_mnemonic(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_FUNC_IS_VALID_ADDRESS
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_FUNC_IS_VALID_ADDRESS
+uint16_t uniffi_jova_core_ffi_checksum_func_is_valid_address(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_FUNC_IS_VALID_MNEMONIC
 #define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_FUNC_IS_VALID_MNEMONIC
 uint16_t uniffi_jova_core_ffi_checksum_func_is_valid_mnemonic(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_METHOD_JOVAWALLET_ADDRESS
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_METHOD_JOVAWALLET_ADDRESS
+uint16_t uniffi_jova_core_ffi_checksum_method_jovawallet_address(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_METHOD_JOVAWALLET_SIGN_MESSAGE
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_METHOD_JOVAWALLET_SIGN_MESSAGE
+uint16_t uniffi_jova_core_ffi_checksum_method_jovawallet_sign_message(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_METHOD_JOVAWALLET_SIGN_TX
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_METHOD_JOVAWALLET_SIGN_TX
+uint16_t uniffi_jova_core_ffi_checksum_method_jovawallet_sign_tx(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_CONSTRUCTOR_JOVAWALLET_FROM_MNEMONIC
+#define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_CHECKSUM_CONSTRUCTOR_JOVAWALLET_FROM_MNEMONIC
+uint16_t uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_mnemonic(void
     
 );
 #endif

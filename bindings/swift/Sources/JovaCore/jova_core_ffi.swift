@@ -419,6 +419,38 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
+    typealias FfiType = UInt32
+    typealias SwiftType = UInt32
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt32 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
+    typealias FfiType = UInt64
+    typealias SwiftType = UInt64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterBool : FfiConverter {
     typealias FfiType = Int8
     typealias SwiftType = Bool
@@ -480,6 +512,1075 @@ fileprivate struct FfiConverterString: FfiConverter {
         writeBytes(&buf, value.utf8)
     }
 }
+
+
+
+
+public protocol JovaWalletProtocol: AnyObject, Sendable {
+    
+    /**
+     * Derive the canonical address for the given chain and account index.
+     */
+    func address(chain: JovaChain, account: UInt32) throws  -> Address
+    
+    /**
+     * Sign a message. Chain is implicit in the `SignableMessage` variant.
+     */
+    func signMessage(msg: SignableMessage) throws  -> Signature
+    
+    /**
+     * Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
+     */
+    func signTx(tx: UnsignedTx) throws  -> SignedTx
+    
+}
+open class JovaWallet: JovaWalletProtocol, @unchecked Sendable {
+    fileprivate let handle: UInt64
+
+    /// Used to instantiate a [FFIObject] without an actual handle, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public struct NoHandle {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    required public init(unsafeFromHandle handle: UInt64) {
+        self.handle = handle
+    }
+
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noHandle: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing handle the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public init(noHandle: NoHandle) {
+        self.handle = 0
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public func uniffiCloneHandle() -> UInt64 {
+        return try! rustCall { uniffi_jova_core_ffi_fn_clone_jovawallet(self.handle, $0) }
+    }
+    // No primary constructor declared for this class.
+
+    deinit {
+        if handle == 0 {
+            // Mock objects have handle=0 don't try to free them
+            return
+        }
+
+        try! rustCall { uniffi_jova_core_ffi_fn_free_jovawallet(handle, $0) }
+    }
+
+    
+    /**
+     * Create a wallet from a BIP-39 mnemonic phrase and optional passphrase.
+     */
+public static func fromMnemonic(words: String, passphrase: String)throws  -> JovaWallet  {
+    return try  FfiConverterTypeJovaWallet_lift(try rustCallWithError(FfiConverterTypeFfiError_lift) {
+    uniffi_jova_core_ffi_fn_constructor_jovawallet_from_mnemonic(
+        FfiConverterString.lower(words),
+        FfiConverterString.lower(passphrase),$0
+    )
+})
+}
+    
+
+    
+    /**
+     * Derive the canonical address for the given chain and account index.
+     */
+open func address(chain: JovaChain, account: UInt32)throws  -> Address  {
+    return try  FfiConverterTypeAddress_lift(try rustCallWithError(FfiConverterTypeFfiError_lift) {
+    uniffi_jova_core_ffi_fn_method_jovawallet_address(
+            self.uniffiCloneHandle(),
+        FfiConverterTypeJovaChain_lower(chain),
+        FfiConverterUInt32.lower(account),$0
+    )
+})
+}
+    
+    /**
+     * Sign a message. Chain is implicit in the `SignableMessage` variant.
+     */
+open func signMessage(msg: SignableMessage)throws  -> Signature  {
+    return try  FfiConverterTypeSignature_lift(try rustCallWithError(FfiConverterTypeFfiError_lift) {
+    uniffi_jova_core_ffi_fn_method_jovawallet_sign_message(
+            self.uniffiCloneHandle(),
+        FfiConverterTypeSignableMessage_lower(msg),$0
+    )
+})
+}
+    
+    /**
+     * Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
+     */
+open func signTx(tx: UnsignedTx)throws  -> SignedTx  {
+    return try  FfiConverterTypeSignedTx_lift(try rustCallWithError(FfiConverterTypeFfiError_lift) {
+    uniffi_jova_core_ffi_fn_method_jovawallet_sign_tx(
+            self.uniffiCloneHandle(),
+        FfiConverterTypeUnsignedTx_lower(tx),$0
+    )
+})
+}
+    
+
+    
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeJovaWallet: FfiConverter {
+    typealias FfiType = UInt64
+    typealias SwiftType = JovaWallet
+
+    public static func lift(_ handle: UInt64) throws -> JovaWallet {
+        return JovaWallet(unsafeFromHandle: handle)
+    }
+
+    public static func lower(_ value: JovaWallet) -> UInt64 {
+        return value.uniffiCloneHandle()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> JovaWallet {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+    public static func write(_ value: JovaWallet, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeJovaWallet_lift(_ handle: UInt64) throws -> JovaWallet {
+    return try FfiConverterTypeJovaWallet.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeJovaWallet_lower(_ value: JovaWallet) -> UInt64 {
+    return FfiConverterTypeJovaWallet.lower(value)
+}
+
+
+
+
+public struct AccessListItem: Equatable, Hashable {
+    public var address: String
+    public var storageKeys: [String]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(address: String, storageKeys: [String]) {
+        self.address = address
+        self.storageKeys = storageKeys
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension AccessListItem: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAccessListItem: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AccessListItem {
+        return
+            try AccessListItem(
+                address: FfiConverterString.read(from: &buf), 
+                storageKeys: FfiConverterSequenceString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: AccessListItem, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.address, into: &buf)
+        FfiConverterSequenceString.write(value.storageKeys, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccessListItem_lift(_ buf: RustBuffer) throws -> AccessListItem {
+    return try FfiConverterTypeAccessListItem.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAccessListItem_lower(_ value: AccessListItem) -> RustBuffer {
+    return FfiConverterTypeAccessListItem.lower(value)
+}
+
+
+public struct Address: Equatable, Hashable {
+    public var chain: JovaChain
+    public var value: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(chain: JovaChain, value: String) {
+        self.chain = chain
+        self.value = value
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension Address: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAddress: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Address {
+        return
+            try Address(
+                chain: FfiConverterTypeJovaChain.read(from: &buf), 
+                value: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Address, into buf: inout [UInt8]) {
+        FfiConverterTypeJovaChain.write(value.chain, into: &buf)
+        FfiConverterString.write(value.value, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAddress_lift(_ buf: RustBuffer) throws -> Address {
+    return try FfiConverterTypeAddress.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeAddress_lower(_ value: Address) -> RustBuffer {
+    return FfiConverterTypeAddress.lower(value)
+}
+
+
+public struct EvmUnsigned: Equatable, Hashable {
+    public var chainId: UInt64
+    public var nonce: UInt64
+    public var to: String
+    public var value: String
+    public var gasLimit: UInt64
+    public var maxFeePerGas: String
+    public var maxPriorityFeePerGas: String
+    public var data: String
+    public var accessList: [AccessListItem]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(chainId: UInt64, nonce: UInt64, to: String, value: String, gasLimit: UInt64, maxFeePerGas: String, maxPriorityFeePerGas: String, data: String, accessList: [AccessListItem]) {
+        self.chainId = chainId
+        self.nonce = nonce
+        self.to = to
+        self.value = value
+        self.gasLimit = gasLimit
+        self.maxFeePerGas = maxFeePerGas
+        self.maxPriorityFeePerGas = maxPriorityFeePerGas
+        self.data = data
+        self.accessList = accessList
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension EvmUnsigned: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeEvmUnsigned: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> EvmUnsigned {
+        return
+            try EvmUnsigned(
+                chainId: FfiConverterUInt64.read(from: &buf), 
+                nonce: FfiConverterUInt64.read(from: &buf), 
+                to: FfiConverterString.read(from: &buf), 
+                value: FfiConverterString.read(from: &buf), 
+                gasLimit: FfiConverterUInt64.read(from: &buf), 
+                maxFeePerGas: FfiConverterString.read(from: &buf), 
+                maxPriorityFeePerGas: FfiConverterString.read(from: &buf), 
+                data: FfiConverterString.read(from: &buf), 
+                accessList: FfiConverterSequenceTypeAccessListItem.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: EvmUnsigned, into buf: inout [UInt8]) {
+        FfiConverterUInt64.write(value.chainId, into: &buf)
+        FfiConverterUInt64.write(value.nonce, into: &buf)
+        FfiConverterString.write(value.to, into: &buf)
+        FfiConverterString.write(value.value, into: &buf)
+        FfiConverterUInt64.write(value.gasLimit, into: &buf)
+        FfiConverterString.write(value.maxFeePerGas, into: &buf)
+        FfiConverterString.write(value.maxPriorityFeePerGas, into: &buf)
+        FfiConverterString.write(value.data, into: &buf)
+        FfiConverterSequenceTypeAccessListItem.write(value.accessList, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeEvmUnsigned_lift(_ buf: RustBuffer) throws -> EvmUnsigned {
+    return try FfiConverterTypeEvmUnsigned.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeEvmUnsigned_lower(_ value: EvmUnsigned) -> RustBuffer {
+    return FfiConverterTypeEvmUnsigned.lower(value)
+}
+
+
+public struct Signature: Equatable, Hashable {
+    public var hex: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(hex: String) {
+        self.hex = hex
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension Signature: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSignature: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Signature {
+        return
+            try Signature(
+                hex: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Signature, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.hex, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSignature_lift(_ buf: RustBuffer) throws -> Signature {
+    return try FfiConverterTypeSignature.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSignature_lower(_ value: Signature) -> RustBuffer {
+    return FfiConverterTypeSignature.lower(value)
+}
+
+
+public struct SignedTx: Equatable, Hashable {
+    public var chain: JovaChain
+    public var rawHex: String
+    public var txHash: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(chain: JovaChain, rawHex: String, txHash: String) {
+        self.chain = chain
+        self.rawHex = rawHex
+        self.txHash = txHash
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension SignedTx: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSignedTx: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SignedTx {
+        return
+            try SignedTx(
+                chain: FfiConverterTypeJovaChain.read(from: &buf), 
+                rawHex: FfiConverterString.read(from: &buf), 
+                txHash: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: SignedTx, into buf: inout [UInt8]) {
+        FfiConverterTypeJovaChain.write(value.chain, into: &buf)
+        FfiConverterString.write(value.rawHex, into: &buf)
+        FfiConverterString.write(value.txHash, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSignedTx_lift(_ buf: RustBuffer) throws -> SignedTx {
+    return try FfiConverterTypeSignedTx.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSignedTx_lower(_ value: SignedTx) -> RustBuffer {
+    return FfiConverterTypeSignedTx.lower(value)
+}
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum BtcMsgScheme: Equatable, Hashable {
+    
+    case bip322
+    case legacy
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension BtcMsgScheme: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeBtcMsgScheme: FfiConverterRustBuffer {
+    typealias SwiftType = BtcMsgScheme
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> BtcMsgScheme {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .bip322
+        
+        case 2: return .legacy
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: BtcMsgScheme, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .bip322:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .legacy:
+            writeInt(&buf, Int32(2))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeBtcMsgScheme_lift(_ buf: RustBuffer) throws -> BtcMsgScheme {
+    return try FfiConverterTypeBtcMsgScheme.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeBtcMsgScheme_lower(_ value: BtcMsgScheme) -> RustBuffer {
+    return FfiConverterTypeBtcMsgScheme.lower(value)
+}
+
+
+
+public enum FfiError: Swift.Error, Equatable, Hashable, Foundation.LocalizedError {
+
+    
+    
+    case InvalidMnemonic(message: String)
+    
+    case InvalidPassphrase(message: String)
+    
+    case InvalidAddress(message: String)
+    
+    case UnsupportedChain(message: String)
+    
+    case MalformedUnsignedTx(message: String)
+    
+    case MalformedSignableMessage(message: String)
+    
+    case SigningFailed(message: String)
+    
+    case Internal(message: String)
+    
+
+    
+
+    
+
+    
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
+    
+}
+
+#if compiler(>=6)
+extension FfiError: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFfiError: FfiConverterRustBuffer {
+    typealias SwiftType = FfiError
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FfiError {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        
+
+        
+        case 1: return .InvalidMnemonic(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 2: return .InvalidPassphrase(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 3: return .InvalidAddress(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 4: return .UnsupportedChain(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 5: return .MalformedUnsignedTx(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 6: return .MalformedSignableMessage(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 7: return .SigningFailed(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 8: return .Internal(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: FfiError, into buf: inout [UInt8]) {
+        switch value {
+
+        
+
+        
+        case .InvalidMnemonic(_ /* message is ignored*/):
+            writeInt(&buf, Int32(1))
+        case .InvalidPassphrase(_ /* message is ignored*/):
+            writeInt(&buf, Int32(2))
+        case .InvalidAddress(_ /* message is ignored*/):
+            writeInt(&buf, Int32(3))
+        case .UnsupportedChain(_ /* message is ignored*/):
+            writeInt(&buf, Int32(4))
+        case .MalformedUnsignedTx(_ /* message is ignored*/):
+            writeInt(&buf, Int32(5))
+        case .MalformedSignableMessage(_ /* message is ignored*/):
+            writeInt(&buf, Int32(6))
+        case .SigningFailed(_ /* message is ignored*/):
+            writeInt(&buf, Int32(7))
+        case .Internal(_ /* message is ignored*/):
+            writeInt(&buf, Int32(8))
+
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiError_lift(_ buf: RustBuffer) throws -> FfiError {
+    return try FfiConverterTypeFfiError.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiError_lower(_ value: FfiError) -> RustBuffer {
+    return FfiConverterTypeFfiError.lower(value)
+}
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum JovaChain: Equatable, Hashable {
+    
+    case ethereum
+    case polygon
+    case bsc
+    case arbitrum
+    case optimism
+    case base
+    case bitcoin
+    case solana
+    case xrp
+    case customEvm(chainId: UInt64
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension JovaChain: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeJovaChain: FfiConverterRustBuffer {
+    typealias SwiftType = JovaChain
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> JovaChain {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .ethereum
+        
+        case 2: return .polygon
+        
+        case 3: return .bsc
+        
+        case 4: return .arbitrum
+        
+        case 5: return .optimism
+        
+        case 6: return .base
+        
+        case 7: return .bitcoin
+        
+        case 8: return .solana
+        
+        case 9: return .xrp
+        
+        case 10: return .customEvm(chainId: try FfiConverterUInt64.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: JovaChain, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .ethereum:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .polygon:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .bsc:
+            writeInt(&buf, Int32(3))
+        
+        
+        case .arbitrum:
+            writeInt(&buf, Int32(4))
+        
+        
+        case .optimism:
+            writeInt(&buf, Int32(5))
+        
+        
+        case .base:
+            writeInt(&buf, Int32(6))
+        
+        
+        case .bitcoin:
+            writeInt(&buf, Int32(7))
+        
+        
+        case .solana:
+            writeInt(&buf, Int32(8))
+        
+        
+        case .xrp:
+            writeInt(&buf, Int32(9))
+        
+        
+        case let .customEvm(chainId):
+            writeInt(&buf, Int32(10))
+            FfiConverterUInt64.write(chainId, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeJovaChain_lift(_ buf: RustBuffer) throws -> JovaChain {
+    return try FfiConverterTypeJovaChain.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeJovaChain_lower(_ value: JovaChain) -> RustBuffer {
+    return FfiConverterTypeJovaChain.lower(value)
+}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum SignableMessage: Equatable, Hashable {
+    
+    case evmPersonalSign(message: String
+    )
+    case evmTypedDataV4(json: String
+    )
+    /**
+     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     */
+    case solana(messageBase64: String
+    )
+    /**
+     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     */
+    case bitcoin(message: String, address: String, scheme: BtcMsgScheme
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension SignableMessage: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeSignableMessage: FfiConverterRustBuffer {
+    typealias SwiftType = SignableMessage
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SignableMessage {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .evmPersonalSign(message: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 2: return .evmTypedDataV4(json: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 3: return .solana(messageBase64: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 4: return .bitcoin(message: try FfiConverterString.read(from: &buf), address: try FfiConverterString.read(from: &buf), scheme: try FfiConverterTypeBtcMsgScheme.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: SignableMessage, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .evmPersonalSign(message):
+            writeInt(&buf, Int32(1))
+            FfiConverterString.write(message, into: &buf)
+            
+        
+        case let .evmTypedDataV4(json):
+            writeInt(&buf, Int32(2))
+            FfiConverterString.write(json, into: &buf)
+            
+        
+        case let .solana(messageBase64):
+            writeInt(&buf, Int32(3))
+            FfiConverterString.write(messageBase64, into: &buf)
+            
+        
+        case let .bitcoin(message,address,scheme):
+            writeInt(&buf, Int32(4))
+            FfiConverterString.write(message, into: &buf)
+            FfiConverterString.write(address, into: &buf)
+            FfiConverterTypeBtcMsgScheme.write(scheme, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSignableMessage_lift(_ buf: RustBuffer) throws -> SignableMessage {
+    return try FfiConverterTypeSignableMessage.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeSignableMessage_lower(_ value: SignableMessage) -> RustBuffer {
+    return FfiConverterTypeSignableMessage.lower(value)
+}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum UnsignedTx: Equatable, Hashable {
+    
+    case evm(tx: EvmUnsigned
+    )
+    /**
+     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     */
+    case bitcoin(psbtBase64: String
+    )
+    /**
+     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     */
+    case solana(messageBase64: String, recentBlockhash: String
+    )
+    /**
+     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     */
+    case xrp(txJson: String
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension UnsignedTx: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeUnsignedTx: FfiConverterRustBuffer {
+    typealias SwiftType = UnsignedTx
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UnsignedTx {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .evm(tx: try FfiConverterTypeEvmUnsigned.read(from: &buf)
+        )
+        
+        case 2: return .bitcoin(psbtBase64: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 3: return .solana(messageBase64: try FfiConverterString.read(from: &buf), recentBlockhash: try FfiConverterString.read(from: &buf)
+        )
+        
+        case 4: return .xrp(txJson: try FfiConverterString.read(from: &buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: UnsignedTx, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case let .evm(tx):
+            writeInt(&buf, Int32(1))
+            FfiConverterTypeEvmUnsigned.write(tx, into: &buf)
+            
+        
+        case let .bitcoin(psbtBase64):
+            writeInt(&buf, Int32(2))
+            FfiConverterString.write(psbtBase64, into: &buf)
+            
+        
+        case let .solana(messageBase64,recentBlockhash):
+            writeInt(&buf, Int32(3))
+            FfiConverterString.write(messageBase64, into: &buf)
+            FfiConverterString.write(recentBlockhash, into: &buf)
+            
+        
+        case let .xrp(txJson):
+            writeInt(&buf, Int32(4))
+            FfiConverterString.write(txJson, into: &buf)
+            
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeUnsignedTx_lift(_ buf: RustBuffer) throws -> UnsignedTx {
+    return try FfiConverterTypeUnsignedTx.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeUnsignedTx_lower(_ value: UnsignedTx) -> RustBuffer {
+    return FfiConverterTypeUnsignedTx.lower(value)
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
+    typealias SwiftType = [String]
+
+    public static func write(_ value: [String], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterString.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [String] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [String]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterString.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeAccessListItem: FfiConverterRustBuffer {
+    typealias SwiftType = [AccessListItem]
+
+    public static func write(_ value: [AccessListItem], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeAccessListItem.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [AccessListItem] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [AccessListItem]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeAccessListItem.read(from: &buf))
+        }
+        return seq
+    }
+}
+/**
+ * Generate a new random mnemonic. Returns the word string (12 or 24 words).
+ */
+public func createMnemonic(bits256: Bool) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_jova_core_ffi_fn_func_create_mnemonic(
+        FfiConverterBool.lower(bits256),$0
+    )
+})
+}
+/**
+ * Return `true` if `addr` is a valid address for `chain`.
+ */
+public func isValidAddress(addr: String, chain: JovaChain) -> Bool  {
+    return try!  FfiConverterBool.lift(try! rustCall() {
+    uniffi_jova_core_ffi_fn_func_is_valid_address(
+        FfiConverterString.lower(addr),
+        FfiConverterTypeJovaChain_lower(chain),$0
+    )
+})
+}
+/**
+ * Return `true` if `words` is a valid BIP-39 mnemonic with correct checksum.
+ */
 public func isValidMnemonic(words: String, passphrase: String) -> Bool  {
     return try!  FfiConverterBool.lift(try! rustCall() {
     uniffi_jova_core_ffi_fn_func_is_valid_mnemonic(
@@ -504,7 +1605,25 @@ private let initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
-    if (uniffi_jova_core_ffi_checksum_func_is_valid_mnemonic() != 44887) {
+    if (uniffi_jova_core_ffi_checksum_func_create_mnemonic() != 44464) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jova_core_ffi_checksum_func_is_valid_address() != 61401) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jova_core_ffi_checksum_func_is_valid_mnemonic() != 1572) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jova_core_ffi_checksum_method_jovawallet_address() != 56552) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jova_core_ffi_checksum_method_jovawallet_sign_message() != 15053) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jova_core_ffi_checksum_method_jovawallet_sign_tx() != 22368) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_mnemonic() != 26437) {
         return InitializationResult.apiChecksumMismatch
     }
 

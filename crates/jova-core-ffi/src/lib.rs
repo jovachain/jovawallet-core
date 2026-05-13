@@ -299,8 +299,8 @@ impl JovaWallet {
     }
 
     /// Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
-    pub fn sign_tx(&self, unsigned: UnsignedTx) -> Result<SignedTx, FfiError> {
-        let core_tx = ffi_unsigned_tx_to_core(unsigned)?;
+    pub fn sign_tx(&self, tx: UnsignedTx) -> Result<SignedTx, FfiError> {
+        let core_tx = ffi_unsigned_tx_to_core(tx)?;
         Ok(core_signed_tx_to_ffi(self.inner.sign_tx(&core_tx).map_err(FfiError::from)?))
     }
 
