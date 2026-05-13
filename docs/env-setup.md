@@ -2,6 +2,8 @@
 
 This document walks through installing every tool needed to build `jovawallet-core` locally on macOS arm64. Use it for: a fresh Mac, a new team member's machine, or recovery after a `~/.cargo` wipe.
 
+**Linux dev VMs:** For Phase 2-7 work that doesn't need Swift / iOS, prefer the Linux dev path — see [`env-setup-linux.md`](env-setup-linux.md). It's faster (no Xcode, no Homebrew LLVM dance for WASM clang) and covers every chain (BTC, SOL, XRP), Kotlin/Android, WASM, and `no_std` primitives. Swift parity is left to CI on `macos-latest`.
+
 For per-phase reference signers (Foundry / bdk-cli / solana-cli / rippled), see the table in the project root `CLAUDE.md` — those install on demand, not now.
 
 ---

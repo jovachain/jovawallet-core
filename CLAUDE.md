@@ -42,9 +42,12 @@ For integration patterns (after the SDK ships): `docs/integration-{ios,android,w
 
 ## Environment
 
-The user is on macOS arm64 with Xcode and Node + pnpm pre-installed. **Rust and Android NDK are NOT pre-installed.** Expect to install missing tools as preconditions to the relevant tasks.
+The project supports two dev platforms:
 
-**Versioning policy (decided 2026-05-10 at project start):** install latest stable for all tools; use `--locked` (so transitive deps are frozen for reproducibility) but omit `--version` (so cargo picks the current latest tool release). Concrete versions below are recorded as of 2026-05-10. Exception: `uniffi-bindgen` (the binary) and the `uniffi` crate (in `Cargo.toml`) **must be the exact same version** — sync at install time (both currently 0.31.1). See `docs/env-setup.md` for the full local-install walkthrough.
+- **macOS arm64** — required only for Swift / iOS XCFramework work. Use this for Phase 4 (app integration) and Phase 5 (App Store release). See [`docs/env-setup.md`](docs/env-setup.md).
+- **Linux x86_64 (Ubuntu 22.04+/24.04)** — recommended for everything else (Phases 2-7 minus the Swift bits). Every chain (BTC, SOL, XRP), the Kotlin/Android binding, the WASM binding, the `no_std` primitives crate, and all reference signers (`cast`, `bdk-cli`, `solana-cli`, `xrpl-py`) build natively on Linux. The Swift parity test is validated by GitHub Actions on `macos-latest` runners. See [`docs/env-setup-linux.md`](docs/env-setup-linux.md).
+
+**Versioning policy (decided 2026-05-10 at project start):** install latest stable for all tools; use `--locked` (so transitive deps are frozen for reproducibility) but omit `--version` (so cargo picks the current latest tool release). Concrete versions below are recorded as of 2026-05-10. Exception: `uniffi-bindgen` (the binary) and the `uniffi` crate (in `Cargo.toml`) **must be the exact same version** — sync at install time (both currently 0.31.1).
 
 > **Install pattern change for uniffi 0.30+:** earlier plan files reference `cargo install uniffi-bindgen-cli`. That crate doesn't exist on crates.io. In modern uniffi the CLI binary ships inside the `uniffi` umbrella crate, gated by the `cli` feature: `cargo install uniffi --features cli --locked`. This installs two binaries: `uniffi-bindgen` (unified) and `uniffi-bindgen-swift` (Swift-optimized). Treat `uniffi-bindgen-cli` in older plan text as the old name for the binary `uniffi-bindgen`.
 
