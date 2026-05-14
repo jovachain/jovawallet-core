@@ -83,3 +83,46 @@ fn bip84_path_helper_rejects_oversized_index() {
     let r = DerivationPath::bip84_path(0, 0, 0x8000_0000);
     assert!(r.is_err());
 }
+
+// ---------------------------------------------------------------------------
+// BIP-44 helper (used by XRP, coin type 144; also matches the EVM path shape
+// when called with coin_type = 60).
+// ---------------------------------------------------------------------------
+
+#[test]
+fn bip44_path_helper_matches_parse_xrp() {
+    let helper = DerivationPath::bip44_path(144, 0, 0, 0).expect("helper");
+    let parsed = DerivationPath::parse("m/44'/144'/0'/0/0").expect("parse");
+    assert_eq!(helper, parsed);
+}
+
+#[test]
+fn bip44_path_helper_matches_parse_eth() {
+    let helper = DerivationPath::bip44_path(60, 0, 0, 0).expect("helper");
+    let parsed = DerivationPath::parse("m/44'/60'/0'/0/0").expect("parse");
+    assert_eq!(helper, parsed);
+}
+
+#[test]
+fn bip44_path_helper_rejects_oversized_coin_type() {
+    let r = DerivationPath::bip44_path(0x8000_0000, 0, 0, 0);
+    assert!(r.is_err());
+}
+
+#[test]
+fn bip44_path_helper_rejects_oversized_account() {
+    let r = DerivationPath::bip44_path(144, 0x8000_0000, 0, 0);
+    assert!(r.is_err());
+}
+
+#[test]
+fn bip44_path_helper_rejects_oversized_change() {
+    let r = DerivationPath::bip44_path(144, 0, 0x8000_0000, 0);
+    assert!(r.is_err());
+}
+
+#[test]
+fn bip44_path_helper_rejects_oversized_index() {
+    let r = DerivationPath::bip44_path(144, 0, 0, 0x8000_0000);
+    assert!(r.is_err());
+}

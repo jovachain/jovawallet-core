@@ -111,4 +111,38 @@ impl DerivationPath {
             ],
         })
     }
+
+    /// Build a generic BIP-44 path: `m/44'/coin_type'/account'/change/index`.
+    ///
+    /// All four caller-supplied components must be below the hardened offset
+    /// (2^31). The helper applies hardening to `coin_type` and `account`
+    /// internally; `change` and `index` remain unhardened per BIP-44.
+    ///
+    /// Used by XRP (`coin_type = 144`) and is the canonical helper for any
+    /// secp256k1 BIP-44 chain. EVM chains have always used the parser
+    /// directly, but `bip44_path(60, 0, 0, 0)` is equivalent to
+    /// `parse("m/44'/60'/0'/0/0")`.
+    pub fn bip44_path(
+        coin_type: u32,
+        account: u32,
+        change: u32,
+        index: u32,
+    ) -> Result<Self, PathError> {
+        if coin_type >= HARDENED_OFFSET
+            || account >= HARDENED_OFFSET
+            || change >= HARDENED_OFFSET
+            || index >= HARDENED_OFFSET
+        {
+            return Err(PathError::IndexOutOfRange);
+        }
+        Ok(Self {
+            indices: alloc::vec![
+                44 + HARDENED_OFFSET,
+                coin_type + HARDENED_OFFSET,
+                account + HARDENED_OFFSET,
+                change,
+                index,
+            ],
+        })
+    }
 }

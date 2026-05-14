@@ -1,8 +1,10 @@
 use jova_core_chains::{
-    Address, BtcSigner, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx,
-    evm::EvmSigner,
+    Address, BtcSigner, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx, XrpSigner,
+    evm::EvmSigner, sol::SolSigner,
 };
-use jova_core_primitives::{DerivationPath, Mnemonic, Seed, derive_secp256k1};
+use jova_core_primitives::{
+    DerivationPath, Ed25519Xprv, Mnemonic, Seed, derive_ed25519, derive_secp256k1,
+};
 
 use crate::chain::JovaChain;
 use crate::error::JovaError;
@@ -29,6 +31,17 @@ impl JovaWallet {
             JovaChain::Bitcoin => {
                 let xprv = self.derive_for(chain)?;
                 Ok(BtcSigner.derive_address(&xprv)?)
+            }
+            JovaChain::Xrp => {
+                let xprv = self.derive_for(chain)?;
+                Ok(XrpSigner.derive_address(&xprv)?)
+            }
+            JovaChain::Solana => {
+                // Solana uses an ed25519 leaf key (Ed25519Xprv); SolSigner is
+                // not a ChainSigner impl (the trait is locked to secp256k1
+                // XPrv), so route directly.
+                let xprv = self.derive_ed25519_for(chain)?;
+                Ok(SolSigner.derive_address(&xprv)?)
             }
             c if c.evm_chain_id().is_some() => {
                 let signer = self.evm_signer(c)?;
@@ -60,6 +73,14 @@ impl JovaWallet {
                 let xprv = self.derive_path("m/84'/0'/0'/0/0")?;
                 Ok(BtcSigner.sign_tx(&xprv, unsigned)?)
             }
+            UnsignedTx::Xrp { .. } => {
+                let xprv = self.derive_path("m/44'/144'/0'/0/0")?;
+                Ok(XrpSigner.sign_tx(&xprv, unsigned)?)
+            }
+            UnsignedTx::Solana { .. } => {
+                let xprv = self.derive_ed25519_path("m/44'/501'/0'/0'/0'")?;
+                Ok(SolSigner.sign_tx(&xprv, unsigned)?)
+            }
         }
     }
 
@@ -76,6 +97,10 @@ impl JovaWallet {
             SignableMessage::Bitcoin { .. } => {
                 let xprv = self.derive_path("m/84'/0'/0'/0/0")?;
                 Ok(BtcSigner.sign_message(&xprv, msg)?)
+            }
+            SignableMessage::Solana { .. } => {
+                let xprv = self.derive_ed25519_path("m/44'/501'/0'/0'/0'")?;
+                Ok(SolSigner.sign_message(&xprv, msg)?)
             }
         }
     }
@@ -98,6 +123,24 @@ impl JovaWallet {
             reason: "bad_path".into(),
         })?;
         derive_secp256k1(&self.seed, &path).map_err(|_| JovaError::Internal {
+            reason: "derive_failed".into(),
+        })
+    }
+
+    fn derive_ed25519_for(&self, chain: &JovaChain) -> Result<Ed25519Xprv, JovaError> {
+        self.derive_ed25519_path(chain.derivation_path())
+    }
+
+    /// SLIP-10 ed25519 derivation. The `DerivationPath::parse` helper applies
+    /// the same hardening syntax used by secp256k1 paths; SLIP-10 ed25519
+    /// requires every component to be hardened — `derive_ed25519` enforces
+    /// that and returns `HardenedRequired` otherwise. The canonical Solana
+    /// path is `m/44'/501'/0'/0'/0'`.
+    fn derive_ed25519_path(&self, path_str: &str) -> Result<Ed25519Xprv, JovaError> {
+        let path = DerivationPath::parse(path_str).map_err(|_| JovaError::Internal {
+            reason: "bad_path".into(),
+        })?;
+        derive_ed25519(&self.seed, &path.indices).map_err(|_| JovaError::Internal {
             reason: "derive_failed".into(),
         })
     }
@@ -135,6 +178,8 @@ fn static_chain_label(id: u64) -> &'static str {
 pub fn is_valid_address(addr: &str, chain: &JovaChain) -> bool {
     match chain {
         JovaChain::Bitcoin => jova_core_chains::btc::validate_btc_address(addr),
+        JovaChain::Xrp => jova_core_chains::xrp::validate_xrp_address(addr),
+        JovaChain::Solana => jova_core_chains::sol::validate_sol_address(addr),
         c if c.evm_chain_id().is_some() => jova_core_chains::evm::validate_address(addr),
         _ => false,
     }

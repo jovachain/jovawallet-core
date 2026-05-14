@@ -11,6 +11,7 @@ mod keys;
 mod mnemonic;
 mod path;
 mod seed;
+mod slip10;
 
 pub use derive::{DeriveError, derive_secp256k1, keccak_address};
 pub use error::MnemonicError;
@@ -18,6 +19,7 @@ pub use keys::XPrv;
 pub use mnemonic::{Mnemonic, Strength};
 pub use path::{DerivationPath, PathError};
 pub use seed::Seed;
+pub use slip10::{Ed25519DeriveError, Ed25519Xprv, derive_ed25519};
 
 // Phase 0 stub — keep until Phase 1 task that removes it.
 #[deprecated(note = "Phase 0 stub; use Mnemonic::validate instead")]

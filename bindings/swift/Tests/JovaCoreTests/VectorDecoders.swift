@@ -70,7 +70,8 @@ func decodeEvmUnsigned(_ dict: [String: Any]) throws -> EvmUnsigned {
 }
 
 /// Decode an `input.unsigned_tx` dict into the uniffi `UnsignedTx` enum.
-/// Supports `"evm"` and `"bitcoin"` kinds; later phases extend this switch.
+/// Supports `"evm"`, `"bitcoin"`, and `"xrp"` kinds; later phases extend this
+/// switch (e.g. `"solana"`).
 func decodeUnsignedTx(_ dict: [String: Any]) throws -> UnsignedTx {
     guard let kind = dict["kind"] as? String else {
         throw VectorDecodeError.missingField("kind")
@@ -84,6 +85,19 @@ func decodeUnsignedTx(_ dict: [String: Any]) throws -> UnsignedTx {
             throw VectorDecodeError.missingField("psbt_base64")
         }
         return .bitcoin(psbtBase64: psbt)
+    case "xrp":
+        guard let txJson = dict["tx_json"] as? String else {
+            throw VectorDecodeError.missingField("tx_json")
+        }
+        return .xrp(txJson: txJson)
+    case "solana":
+        guard let msg = dict["message_base64"] as? String else {
+            throw VectorDecodeError.missingField("message_base64")
+        }
+        guard let bh = dict["recent_blockhash"] as? String else {
+            throw VectorDecodeError.missingField("recent_blockhash")
+        }
+        return .solana(messageBase64: msg, recentBlockhash: bh)
     default:
         throw VectorDecodeError.unknownUnsignedTxKind(kind)
     }
@@ -125,6 +139,11 @@ func decodeSignableMessage(_ dict: [String: Any]) throws -> SignableMessage {
         }
         let scheme = try decodeBtcMsgScheme(schemeStr)
         return .bitcoin(message: msg, address: addr, scheme: scheme)
+    case "solana":
+        guard let msgB64 = dict["message_base64"] as? String else {
+            throw VectorDecodeError.missingField("message_base64")
+        }
+        return .solana(messageBase64: msgB64)
     default:
         throw VectorDecodeError.unknownMessageKind(kind)
     }

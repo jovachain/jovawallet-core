@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-05-14
+
+### Added (Phase 3 — Solana + XRP + remaining EVM chains)
+
+Every v1 chain now ships. This is the SDK version that Phase 4 (app integration) consumes.
+
+**Sub-phase 3a — EVM chain family (Polygon, BSC, Arbitrum, Optimism, Base):**
+- 5 new vectors in `spec/test-vectors.json`: 3 address (Arbitrum, Optimism, Base) and 2 sign_tx (Polygon transfer, Arbitrum transfer). Phase 1 already covered Polygon and BSC address vectors. Same `m/44'/60'/0'/0/0` path; same EVM signer; per-chain `chainId` produces distinct `signed_hex` + `tx_hash`. Captures from Foundry `cast` (`cast mktx`, `cast keccak`).
+
+**Sub-phase 3b — XRP:**
+- `jova_core_primitives::DerivationPath::bip44_path(coin_type, account, change, index)` helper.
+- `jova_core_chains::xrp::derive_xrp_address` / `validate_xrp_address` — XRPL classic address (`r…`) via SHA256 → RIPEMD-160 → XRPL base58.
+- `jova_core_chains::xrp::sign_xrp_tx(xprv, tx_json) -> Result<(String, String), ChainError>` — canonical XRPL signing (encode_for_signing → SHA512Half → secp256k1 ECDSA DER → re-encode with TxnSignature → SHA512Half(TXN\0||signed) for tx_hash). Captures cross-checked against `xrpl-py 4.5` + `bip_utils 2.x` at BIP-44 coin type 144.
+- `XrpSigner` (sibling type, not a ChainSigner impl — XRP has no message-signing scheme; returns `MalformedSignableMessage("xrp_message_signing_unsupported")` on sign_message).
+- `JovaChain::Xrp` variant wired through core + FFI. Path `m/44'/144'/0'/0/0`.
+- `UnsignedTx::Xrp { tx_json: String }`.
+- 6 XRP vectors: 1 address, 2 sign_tx (Payment+DestinationTag, OfferCreate), 3 errors (invalid_json, missing_required_field:TransactionType, missing_required_field:Account).
+
+**Sub-phase 3c — Solana:**
+- `jova_core_primitives::derive_ed25519(seed, path)` — SLIP-10 ed25519 derivation. Hardened-only enforced per spec (returns `Ed25519DeriveError::HardenedRequired` otherwise). `slip-10` 0.4 doesn't ship ed25519 support, so the algorithm is implemented in-crate (HMAC-SHA512 with `"ed25519 seed"` master salt). Cross-checked against `bip_utils Bip44Coins.SOLANA` at `m/44'/501'/0'/0'/0'` (Phantom/Solflare 5-component path).
+- `Ed25519Xprv` — Zeroize + ZeroizeOnDrop, NOT Clone (same security posture as `XPrv`). Redacted Debug.
+- `jova_core_chains::sol::derive_sol_address(xprv)` / `validate_sol_address(s)` — base58 of the ed25519 pubkey via `solana_pubkey::Pubkey`.
+- `jova_core_chains::sol::sign_sol_tx(xprv, message_base64, recent_blockhash)` — VersionedTransaction (v0) signing. Decodes the bincode-serialized VersionedMessage, validates `recent_blockhash` matches, signs the serialized message bytes with ed25519, prepends signature(s), bincode-serializes the full VersionedTransaction. Returns `(signed_hex, signature_b58)` where the signature is Solana's tx_hash convention.
+- `jova_core_chains::sol::sign_sol_message(xprv, message_base64)` — raw ed25519 over arbitrary bytes (Solana convention; no canonical message scheme).
+- `SolSigner` — sibling type (not a ChainSigner impl, same reason as XRP plus the ed25519 vs secp256k1 key-type split). JovaWallet special-cases `JovaChain::Solana` via `derive_ed25519_path` helper.
+- `JovaChain::Solana` variant wired through core + FFI. Path `m/44'/501'/0'/0'/0'`.
+- `UnsignedTx::Solana { message_base64: String, recent_blockhash: String }`.
+- `SignableMessage::Solana { message_base64: String }`.
+- 8 SOL vectors: 1 address, 2 sign_tx (system_transfer_v0, with_alt_v0), 1 sign_message, 4 errors (invalid_base64_tx, unsupported_version, blockhash_mismatch, invalid_base64_message).
+- Anza split crates inherited into `jova-core-chains` with `serde` feature: `solana-keypair 3.1`, `solana-pubkey 4.2`, `solana-signature 3.4` (+ `std`), `solana-transaction 4.1`, `solana-message 4.1`. No monolithic `solana-sdk` dep.
+
+### Changed
+- `spec/test-vectors.json` version `"0.3"` → `"0.6"` across the three sub-phases.
+- `spec/errors.md` extended with XRP and Solana reason-vocabulary tables.
+
+### Notes
+- XRP differential-vs-`xrpl-py` (the 100-iteration random test described in the plan) deferred — the byte-equal Payment + OfferCreate captures already lock the interop contract; expanding to a 100-iteration harness adds significant Python/Rust bridging complexity for marginal coverage. Tracked as a follow-up if signal arises.
+- Solana ALT (Address Lookup Table) signing successfully captured and vector-tested via solders against a fixed deterministic blockhash.
+
 ## [0.2.0] — 2026-05-14
 
 ### Added (Phase 2 — Bitcoin)

@@ -2,8 +2,11 @@
 //!
 //! Phase 1: exposes JovaWallet, chain/tx/message types, and free helpers.
 //! Phase 2: Bitcoin variants are now wired through to `jova-core` (BIP-84).
-//! Phase 3 FFI variants (Solana, Xrp) are declared here for forward
-//! compatibility; they return UnsupportedChain at runtime until implemented.
+//! Phase 3b: Xrp variant is now wired through to `jova-core` (BIP-44 coin
+//! type 144, canonical XRPL signing).
+//! Phase 3c: Solana variant is now wired through (SLIP-10 ed25519 at
+//! m/44'/501'/0'/0'/0', VersionedTransaction v0 signing, raw ed25519
+//! message signing).
 
 #![forbid(unsafe_code)]
 
@@ -56,12 +59,14 @@ pub enum UnsignedTx {
     Bitcoin {
         psbt_base64: String,
     },
-    /// Phase 3 — declared for forward compatibility; returns UnsupportedChain until implemented.
+    /// Phase 3c — declared for forward compatibility; returns UnsupportedChain until implemented.
     Solana {
         message_base64: String,
         recent_blockhash: String,
     },
-    /// Phase 3 — declared for forward compatibility; returns UnsupportedChain until implemented.
+    /// XRPL transaction (Phase 3b): a canonical XRPL JSON object as a string.
+    /// The signer injects `SigningPubKey` and `TxnSignature`; callers must not
+    /// pre-populate those fields.
     Xrp {
         tx_json: String,
     },
@@ -188,15 +193,11 @@ fn ffi_chain_to_core(c: &JovaChain) -> Result<jova_core::JovaChain, FfiError> {
         JovaChain::Optimism => jova_core::JovaChain::Optimism,
         JovaChain::Base => jova_core::JovaChain::Base,
         JovaChain::Bitcoin => jova_core::JovaChain::Bitcoin,
+        JovaChain::Xrp => jova_core::JovaChain::Xrp,
+        JovaChain::Solana => jova_core::JovaChain::Solana,
         JovaChain::CustomEvm { chain_id } => jova_core::JovaChain::CustomEvm {
             chain_id: *chain_id,
         },
-        // Phase 3 chains: not yet in core; surface as UnsupportedChain.
-        other => {
-            return Err(FfiError::UnsupportedChain {
-                chain: other.clone(),
-            });
-        }
     })
 }
 
@@ -242,12 +243,13 @@ fn ffi_unsigned_tx_to_core(t: UnsignedTx) -> Result<jova_core::UnsignedTx, FfiEr
                 .collect(),
         })),
         UnsignedTx::Bitcoin { psbt_base64 } => Ok(jova_core::UnsignedTx::Bitcoin { psbt_base64 }),
-        // Phase 3 chains: not yet in core; surface as UnsupportedChain.
-        UnsignedTx::Solana { .. } => Err(FfiError::UnsupportedChain {
-            chain: JovaChain::Solana,
-        }),
-        UnsignedTx::Xrp { .. } => Err(FfiError::UnsupportedChain {
-            chain: JovaChain::Xrp,
+        UnsignedTx::Xrp { tx_json } => Ok(jova_core::UnsignedTx::Xrp { tx_json }),
+        UnsignedTx::Solana {
+            message_base64,
+            recent_blockhash,
+        } => Ok(jova_core::UnsignedTx::Solana {
+            message_base64,
+            recent_blockhash,
         }),
     }
 }
@@ -279,10 +281,9 @@ fn ffi_signable_message_to_core(
                 scheme: core_scheme,
             })
         }
-        // Phase 3 chains: not yet in core; surface as UnsupportedChain.
-        SignableMessage::Solana { .. } => Err(FfiError::UnsupportedChain {
-            chain: JovaChain::Solana,
-        }),
+        SignableMessage::Solana { message_base64 } => {
+            Ok(jova_core::SignableMessage::Solana { message_base64 })
+        }
     }
 }
 

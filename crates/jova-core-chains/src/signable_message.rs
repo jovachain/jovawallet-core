@@ -16,5 +16,11 @@ pub enum SignableMessage {
         address: String,
         scheme: BtcMsgScheme,
     },
-    // Phase 3+ adds: Solana.
+    /// Solana raw ed25519 message signing. Solana has no canonical message
+    /// scheme (no BIP-322 / EIP-191 equivalent); the wallet convention is to
+    /// sign arbitrary base64-encoded bytes directly with the ed25519 leaf
+    /// key. Phantom, Solflare, and Backpack all do this.
+    Solana {
+        message_base64: String,
+    },
 }
