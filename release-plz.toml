@@ -1,0 +1,28 @@
+# release-plz configuration. Activated by .github/workflows/release-plz.yml
+# in workflow_dispatch mode. Phase 5 deliverable.
+
+[workspace]
+# Don't auto-release. release-plz opens a PR; the human merges to release.
+release_always = false
+# Conventional Commits drive the semver bump.
+semver_check = true
+# CHANGELOG style.
+changelog_config = "release-plz.changelog.toml"
+# Don't publish in the open-PR step; the existing tag-on-push pipeline
+# in Phase 0's release.yml handles publishing.
+publish = false
+# Allow dev-versions during pre-1.0 — release-plz won't fight the 0.x cadence.
+allow_dirty = false
+git_release_enable = true
+git_release_type = "auto"
+
+# Don't release the binary tools as crates.io packages.
+[[package]]
+name = "jova-verify-spec"
+publish = false
+release = false
+
+[[package]]
+name = "jova-btc-migration-check"
+publish = false
+release = false

@@ -1,0 +1,42 @@
+name: release-plz
+# Phase 5 deliverable: automated semver bumps + CHANGELOG entries from
+# Conventional Commit history. Opens a PR that bumps Cargo.toml versions
+# and updates CHANGELOG.md; merging that PR triggers the existing
+# tag-on-push release pipeline.
+#
+# Until v1.0.0 ships, this workflow is `workflow_dispatch` only — manual
+# triggers per release. Post-v1.0 the team flips it to push-to-main.
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'release-plz subcommand (release-pr | release)'
+        required: true
+        default: 'release-pr'
+        type: choice
+        options:
+          - release-pr
+          - release
+
+jobs:
+  release-plz:
+    name: release-plz ${{ inputs.release_type }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PLZ_TOKEN || secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run release-plz
+        uses: release-plz/action@v0.5
+        with:
+          command: ${{ inputs.release_type }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN || secrets.GITHUB_TOKEN }}
+          # CARGO_REGISTRY_TOKEN is required only when command == release.
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

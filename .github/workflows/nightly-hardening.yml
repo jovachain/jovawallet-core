@@ -1,0 +1,61 @@
+name: nightly-hardening
+# Phase 5 hardening track: deep property tests, mutation testing, unused-dep
+# detection. Runs once nightly so that PR cycles stay fast. Findings here are
+# inputs to the v1.0.0 release gate — see docs/phase-5-status.md.
+on:
+  schedule:
+    # 04:30 UTC daily (after the audit workflow's 04:00 slot).
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  deep-proptest:
+    name: proptest @ 4096 cases
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run proptest with PROPTEST_CASES=4096
+        env:
+          PROPTEST_CASES: '4096'
+        run: cargo test --workspace --locked --tests
+        # PR runs use the default 256 cases; nightly bumps depth.
+
+  cargo-mutants:
+    name: cargo-mutants on primitives + chains
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-mutants
+        run: cargo install cargo-mutants --locked
+      - name: Run mutation tests on jova-core-primitives
+        run: cargo mutants --package jova-core-primitives --no-shuffle --jobs 1 || true
+        # Reports surviving mutants. CI does not fail on survivors yet; the
+        # release gate is human review of the report in docs/phase-5-status.md.
+      - name: Run mutation tests on jova-core-chains
+        run: cargo mutants --package jova-core-chains --no-shuffle --jobs 1 || true
+      - name: Upload mutation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cargo-mutants-${{ github.run_id }}
+          path: mutants.out/
+
+  cargo-machete:
+    name: cargo-machete (unused-dep check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-machete
+        run: cargo install cargo-machete --locked
+      - name: Run cargo-machete
+        run: cargo machete --with-metadata
+        # Fails CI if any crate declares a workspace dep it doesn't use.
+        # Cleanup-only finding; v1.0 release gate.
