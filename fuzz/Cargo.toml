@@ -14,6 +14,7 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 jova-core = { path = "../crates/jova-core", default-features = true }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
+base64 = "0.22"
 
 [[bin]]
 name = "fuzz_eip1559_decode"
@@ -30,5 +31,23 @@ doc  = false
 [[bin]]
 name = "fuzz_address_parse"
 path = "fuzz_targets/fuzz_address_parse.rs"
+test = false
+doc  = false
+
+[[bin]]
+name = "fuzz_psbt_sign"
+path = "fuzz_targets/fuzz_psbt_sign.rs"
+test = false
+doc  = false
+
+[[bin]]
+name = "fuzz_btc_address_parse"
+path = "fuzz_targets/fuzz_btc_address_parse.rs"
+test = false
+doc  = false
+
+[[bin]]
+name = "fuzz_bip322_verify"
+path = "fuzz_targets/fuzz_bip322_verify.rs"
 test = false
 doc  = false
