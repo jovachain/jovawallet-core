@@ -18,6 +18,12 @@ zeroize.workspace = true
 bip39.workspace = true
 bip32.workspace = true
 secp256k1.workspace = true
+# Phase 3c — SLIP-10 ed25519 hierarchical key derivation for Solana. The
+# `slip-10` crate on crates.io does not implement ed25519 (its README:
+# "Implementation currently does not support ed25519 curve"), so the
+# algorithm is in-crate. ed25519-dalek is used solely to expand a derived
+# secret scalar to the corresponding 32-byte public key.
+ed25519-dalek.workspace = true
 hmac.workspace = true
 sha2.workspace = true
 sha3.workspace = true
