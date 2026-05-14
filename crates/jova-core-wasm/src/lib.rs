@@ -93,7 +93,9 @@ impl JovaWallet {
         // through engine crates we have not validated in this build.  Match
         // the signing policy: reject at the WASM boundary.
         if matches!(chain, JovaChain::Bitcoin) {
-            return Err(jova_err_payload(JsErrorPayload::unsupported_chain("bitcoin")));
+            return Err(jova_err_payload(JsErrorPayload::unsupported_chain(
+                "bitcoin",
+            )));
         }
         if matches!(chain, JovaChain::Xrp) {
             return Err(jova_err_payload(JsErrorPayload::unsupported_chain("xrp")));
@@ -112,7 +114,9 @@ impl JovaWallet {
         // Reject BTC / XRP before the inner wallet touches them.
         match &unsigned {
             UnsignedTx::Bitcoin { .. } => {
-                return Err(jova_err_payload(JsErrorPayload::unsupported_chain("bitcoin")));
+                return Err(jova_err_payload(JsErrorPayload::unsupported_chain(
+                    "bitcoin",
+                )));
             }
             UnsignedTx::Xrp { .. } => {
                 return Err(jova_err_payload(JsErrorPayload::unsupported_chain("xrp")));
@@ -131,7 +135,9 @@ impl JovaWallet {
             .ok_or_else(|| jova_err_payload(JsErrorPayload::wallet_destroyed()))?;
         let msg: SignableMessage = swb::from_value(msg_js).map_err(jserr)?;
         if matches!(msg, SignableMessage::Bitcoin { .. }) {
-            return Err(jova_err_payload(JsErrorPayload::unsupported_chain("bitcoin")));
+            return Err(jova_err_payload(JsErrorPayload::unsupported_chain(
+                "bitcoin",
+            )));
         }
         let sig: Signature = inner.sign_message(&msg).map_err(jova_err)?;
         swb::to_value(&sig).map_err(jserr)
