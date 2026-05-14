@@ -2,14 +2,38 @@
   "name": "@jovachain/wallet-core",
   "version": "0.0.1",
   "private": true,
-  "description": "WASM binding for jovawallet-core",
+  "description": "WASM binding for jovawallet-core (EVM + SOL signing; BTC + XRP deferred — see COVERAGE.md)",
   "type": "module",
-  "main": "./pkg/jova_core_wasm.js",
-  "types": "./pkg/jova_core_wasm.d.ts",
-  "files": ["pkg/", "src/", "README.md"],
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./evm": {
+      "types": "./src/evm.ts",
+      "import": "./src/evm.ts"
+    },
+    "./sol": {
+      "types": "./src/sol.ts",
+      "import": "./src/sol.ts"
+    },
+    "./init": {
+      "types": "./pkg/jova_core_wasm.d.ts",
+      "import": "./pkg/jova_core_wasm.js"
+    }
+  },
+  "files": [
+    "pkg/",
+    "src/",
+    "README.md",
+    "COVERAGE.md"
+  ],
   "scripts": {
     "build": "./scripts/build-wasm.sh",
-    "test": "vitest run"
+    "test": "vitest run",
+    "size-check": "node scripts/size-check.mjs"
   },
   "devDependencies": {
     "vitest": "^4.1.0",

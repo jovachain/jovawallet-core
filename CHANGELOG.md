@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added (Phase 6 — WASM functional EVM + SOL)
+
+The WASM binding (`crates/jova-core-wasm`) now exposes the full `JovaWallet` signing surface for EVM + SOL chains. **BTC + XRP browser signing is deferred per the 2026-05-11 user decision** — those variants return `unsupportedChain` at the WASM boundary before any chain code executes. Native bindings (Swift, Kotlin) retain full coverage; only WASM is constrained.
+
+- **Full JovaWallet WASM surface**: `createMnemonic`, `isValidMnemonic`, `isValidAddress`, `new JovaWallet(mnemonic)`, `.address(chain, account)`, `.signTx(unsigned)`, `.signMessage(msg)`, `.destroy()`. Wraps `Option<jova_core::JovaWallet>` so `destroy()` zeroizes the inner seed deterministically (JS GC finalizers run too late for crypto).
+- **TypeScript types** with discriminated unions for `JovaChain`, `UnsignedTx`, `SignableMessage`, `JovaErrorPayload`. Hand-written, not auto-generated.
+- **Disposable `JovaWallet` wrapper** in TS — `using wallet = JovaWallet.fromMnemonic(mnemonic)` in TS 5.5+ calls `destroy()` on scope exit via `Symbol.dispose`.
+- **Per-chain entrypoints** for tree-shaking: `@jovachain/wallet-core/evm` and `@jovachain/wallet-core/sol` (no `/btc` or `/xrp` per the deferral). Subpath exports in `bindings/wasm/package.json`.
+- **42 Vitest tests** across 4 test files: 9 EVM address, 6 EVM sign_tx, 2 EVM sign_message, 3 EVM error, 1 SOL address, 2 SOL sign_tx, 1 SOL sign_message, 4 SOL error, 5 BTC/XRP rejection assertions, 1 hello-world.
+- **Bundle size budget check** (`bindings/wasm/scripts/size-check.mjs`). Current: 787 KB gzipped (vs. 2 MB budget) for the WASM blob, 20 KB raw for `index.js`.
+- **`bindings/wasm/COVERAGE.md`** documents the deferral honestly.
+- **getrandom 0.2/0.3 dual feature flag**: declared both at the WASM leaf crate (`getrandom 0.3 features = ["wasm_js"]` + `getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }`). Cargo unifies features additively per version, so transitive 0.2 deps (alloy + solana-keypair → rand_core → elliptic-curve) get browser RNG without conflicting with the workspace 0.3 dep.
+
+No SDK API change; no version bump in this section (v1.1.0 ships at Phase 6 final tag after Phase 5 closes).
+
 ## [0.3.0] — 2026-05-14
 
 ### Added (Phase 3 — Solana + XRP + remaining EVM chains)

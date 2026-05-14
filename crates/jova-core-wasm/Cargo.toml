@@ -16,12 +16,44 @@ crate-type = ["cdylib"]
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
 
+# Feature flags here are documentation of intent: which chains the WASM package
+# considers functional. They do NOT gate compilation — the chains crate is in
+# unconditionally because gating it would mean a much larger refactor across
+# jova-core-chains.  Runtime rejection of Bitcoin / XRP variants happens in
+# src/lib.rs before any chain code executes.  See bindings/wasm/COVERAGE.md.
+[features]
+default = ["chain-evm", "chain-sol"]
+chain-evm = []
+chain-sol = []
+# chain-btc, chain-xrp deliberately omitted from default per the 2026-05-11
+# recorded decision.  The flags remain declared so downstream tooling can read
+# the intent from Cargo metadata.
+chain-btc = []
+chain-xrp = []
+
 [dependencies]
-# jova-core with no `chains` feature: avoids secp256k1-sys (a C crate) which
-# cannot compile for wasm32-unknown-unknown on macOS with Apple clang.
-# Phase 6 will re-enable chain signing once a wasm-compatible signing path exists.
-jova-core.workspace = true
+# jova-core with the `chains` feature so the WASM layer exposes the full
+# JovaWallet signing surface (EVM + SOL).  The C crate secp256k1-sys compiles
+# cleanly for wasm32-unknown-unknown thanks to the .cargo/config.toml CFLAGS
+# memmove shim plus Linux/Brew clang.  See bindings/wasm/COVERAGE.md.
+jova-core = { workspace = true, features = ["chains"] }
+jova-core-chains.workspace = true
 wasm-bindgen.workspace = true
 serde-wasm-bindgen.workspace = true
-# getrandom 0.3 uses `wasm_js` feature for browser RNG (renamed from `js` in 0.2).
+serde = { workspace = true, features = ["derive"] }
+# Debug ergonomics: panics print to console.error in the browser instead of
+# silently aborting.  Only enabled in debug_assertions builds at runtime.
+console_error_panic_hook = "0.1"
+
+# getrandom 0.3 (workspace dep): used by jova-core-primitives, jova-core, and
+# wasm-bindgen.  The `wasm_js` feature is the 0.3-era replacement for the old
+# 0.2 `js` feature.
 getrandom = { workspace = true, features = ["wasm_js"] }
+
+# getrandom 0.2 (transitive via alloy + solana-keypair → rand_core 0.6 →
+# crypto-bigint → elliptic-curve).  Cargo unifies features additively per
+# version, so a direct dep here with `js` enabled flips the browser-RNG flag
+# across the entire 0.2 line.  The `package = "getrandom"` rename lets us
+# import this crate under a different name in case Rust later refuses two
+# crates with the same name in one Cargo.toml; in practice we never `use` it.
+getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
