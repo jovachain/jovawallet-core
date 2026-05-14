@@ -25,6 +25,7 @@ allow = [
     "Unicode-3.0",
     "CC0-1.0",
     "Zlib",
+    "MITNFA",  # MIT + "No False Attributions" clause; transitive via hex_lit (a bitcoin 0.32 dep).
 ]
 confidence-threshold = 0.93
 
