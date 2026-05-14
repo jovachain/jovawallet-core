@@ -1,0 +1,17 @@
+[package]
+name = "jova-btc-migration-check"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+description = "Verifies SDK BIP-84 derivation matches the production Android wallet's known mappings."
+
+[[bin]]
+name = "btc-migration-check"
+path = "src/main.rs"
+
+[dependencies]
+jova-core = { workspace = true, features = ["chains"] }
+csv = "1.3"

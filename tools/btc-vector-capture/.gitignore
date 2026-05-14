@@ -1,0 +1,10 @@
+# Local virtualenv used by single_input.sh (defaults to /tmp/btc-venv, so only
+# matters if you set BTC_CAPTURE_VENV to a local path). Just in case.
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# bitcoind regtest state, if a future Path A capture is ever wired up.
+.bitcoin/
+bitcoind.pid

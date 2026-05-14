@@ -2,9 +2,11 @@ package io.jova.core
 
 import org.json.JSONObject
 import uniffi.jova_core_ffi.AccessListItem
+import uniffi.jova_core_ffi.BtcMsgScheme
 import uniffi.jova_core_ffi.EvmUnsigned
 import uniffi.jova_core_ffi.JovaChain
 import uniffi.jova_core_ffi.SignableMessage
+import uniffi.jova_core_ffi.UnsignedTx
 
 class VectorDecodeException(msg: String) : RuntimeException(msg)
 
@@ -47,8 +49,34 @@ fun decodeEvmUnsigned(o: JSONObject): EvmUnsigned {
     )
 }
 
+/**
+ * Decode an `input.unsigned_tx` JSON object into the uniffi `UnsignedTx` enum.
+ * Routes by the `kind` discriminator: `"evm"` and `"bitcoin"` are supported.
+ * Phase 3+ kinds throw `VectorDecodeException` (callers `continue` past them).
+ */
+fun decodeUnsignedTx(o: JSONObject): UnsignedTx = when (val kind = o.getString("kind")) {
+    "evm"     -> UnsignedTx.Evm(tx = decodeEvmUnsigned(o))
+    "bitcoin" -> UnsignedTx.Bitcoin(psbtBase64 = o.getString("psbt_base64"))
+    else      -> throw VectorDecodeException("unknown unsigned_tx kind: $kind")
+}
+
+/**
+ * Map the spec's camelCase `scheme` field to the uniffi `BtcMsgScheme` enum.
+ * uniffi 0.31 emits SCREAMING_SNAKE for enum variants, so `bip322` → `BIP322`.
+ */
+private fun decodeBtcMsgScheme(s: String): BtcMsgScheme = when (s) {
+    "bip322" -> BtcMsgScheme.BIP322
+    "legacy" -> BtcMsgScheme.LEGACY
+    else     -> throw VectorDecodeException("unknown btc msg scheme: $s")
+}
+
 fun decodeSignableMessage(o: JSONObject): SignableMessage = when (val kind = o.getString("kind")) {
     "evmPersonalSign" -> SignableMessage.EvmPersonalSign(message = o.getString("message"))
     "evmTypedDataV4"  -> SignableMessage.EvmTypedDataV4(json = o.getString("json"))
+    "bitcoin"         -> SignableMessage.Bitcoin(
+        message = o.getString("message"),
+        address = o.getString("address"),
+        scheme = decodeBtcMsgScheme(o.getString("scheme"))
+    )
     else              -> throw VectorDecodeException("unknown message kind: $kind")
 }

@@ -30,7 +30,8 @@ pub use chain::JovaChain;
 pub use error::JovaError;
 #[cfg(feature = "chains")]
 pub use jova_core_chains::{
-    AccessListItem, Address, EvmUnsigned, SignableMessage, Signature, SignedTx, UnsignedTx,
+    AccessListItem, Address, BtcMsgScheme, EvmUnsigned, SignableMessage, Signature, SignedTx,
+    UnsignedTx,
 };
 #[cfg(feature = "chains")]
 pub use wallet::{JovaWallet, is_valid_address};

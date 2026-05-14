@@ -91,4 +91,24 @@ impl DerivationPath {
         }
         Ok(Self { indices })
     }
+
+    /// Build a BIP-84 native SegWit path: `m/84'/0'/account'/change/index`.
+    ///
+    /// Coin type is hardcoded to `0` (Bitcoin mainnet). The three caller-supplied
+    /// components must be below the hardened offset; the helper applies hardening
+    /// to `account` internally.
+    pub fn bip84_path(account: u32, change: u32, index: u32) -> Result<Self, PathError> {
+        if account >= HARDENED_OFFSET || change >= HARDENED_OFFSET || index >= HARDENED_OFFSET {
+            return Err(PathError::IndexOutOfRange);
+        }
+        Ok(Self {
+            indices: alloc::vec![
+                84 + HARDENED_OFFSET,
+                HARDENED_OFFSET, // BTC mainnet coin type (0 hardened)
+                account + HARDENED_OFFSET,
+                change,
+                index,
+            ],
+        })
+    }
 }

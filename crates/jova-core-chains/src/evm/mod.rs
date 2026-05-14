@@ -42,6 +42,9 @@ impl ChainSigner for EvmSigner {
                     tx_hash,
                 })
             }
+            _ => Err(ChainError::MalformedUnsignedTx(
+                "expected_evm_variant".into(),
+            )),
         }
     }
 
@@ -49,6 +52,11 @@ impl ChainSigner for EvmSigner {
         let hex = match msg {
             SignableMessage::EvmPersonalSign { message } => eip191::sign(key, message)?,
             SignableMessage::EvmTypedDataV4 { json } => eip712::sign_typed_data_v4(key, json)?,
+            _ => {
+                return Err(ChainError::MalformedSignableMessage(
+                    "expected_evm_message".into(),
+                ));
+            }
         };
         Ok(Signature { hex })
     }

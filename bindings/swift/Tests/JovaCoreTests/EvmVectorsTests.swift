@@ -80,11 +80,16 @@ final class EvmVectorsTests: XCTestCase {
             let pass = (input["passphrase"] as? String) ?? ""
             let messageDict = input["message"] as! [String: Any]
 
+            // Phase 2 added BTC sign_message vectors with `message.kind == "bitcoin"`;
+            // those are exercised by BtcVectorsTests. Skip them here. (The decoder
+            // used to throw on non-EVM kinds; now it returns Bitcoin variants too.)
+            let msgKind = (messageDict["kind"] as? String) ?? ""
+            guard msgKind == "evmPersonalSign" || msgKind == "evmTypedDataV4" else { continue }
+
             let signable: SignableMessage
             do {
                 signable = try decodeSignableMessage(messageDict)
             } catch VectorDecodeError.unknownMessageKind {
-                // Skip non-EVM message kinds (Phase 2/3 will cover them).
                 continue
             }
 

@@ -47,6 +47,6 @@ audit:
 
 # Run cargo-fuzz on every target for 60 seconds.
 fuzz:
-    for t in fuzz_eip1559_decode fuzz_eip712_typed fuzz_address_parse; do \
+    for t in fuzz_eip1559_decode fuzz_eip712_typed fuzz_address_parse fuzz_psbt_sign fuzz_btc_address_parse fuzz_bip322_verify; do \
         cargo +nightly fuzz run "$t" -- -max_total_time=60 ; \
     done
