@@ -1,5 +1,5 @@
 {
-  "version": "0.3",
+  "version": "0.6",
   "vectors": [
     {
       "id": "phase0.mnemonic_validation_neg.gibberish",
@@ -569,6 +569,386 @@
       },
       "source": "BIP-173 example mainnet bech32 P2WPKH address (NOT owned by the abandon-about wallet), supplied to sign_btc_message which compares against derived address and rejects",
       "source_url": "https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "phase3a.address.arbitrum_abandon",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "arbitrum" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — every EVM chain in v1 shares the BIP-44 coin type 60 derivation path; this vector locks JovaChain::Arbitrum routing"
+    },
+
+    {
+      "id": "phase3a.address.optimism_abandon",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "optimism" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — every EVM chain in v1 shares the BIP-44 coin type 60 derivation path; this vector locks JovaChain::Optimism routing"
+    },
+
+    {
+      "id": "phase3a.address.base_abandon",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "base" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — every EVM chain in v1 shares the BIP-44 coin type 60 derivation path; this vector locks JovaChain::Base routing"
+    },
+
+    {
+      "id": "phase3a.tx.polygon_transfer",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 137,
+          "nonce": 5,
+          "to": "0x000000000000000000000000000000000000dEaD",
+          "value": "1000000000000000000",
+          "gasLimit": 21000,
+          "maxFeePerGas": "80000000000",
+          "maxPriorityFeePerGas": "50000000000",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f875818905850ba43b74008512a05f200082520894000000000000000000000000000000000000dead880de0b6b3a764000080c001a076c0d417290f3d7911efed4c402197fe14dd155b2a92877a907c59c9a5a8d07ba020aa7af11650bec52cd01a53f4bc9de5b5f7b40db8a4a564564d5f2c406290a3",
+        "tx_hash": "0x0c2e43ec1611d39079bac414e55c48286d5afe183cae3c9c2d72e7554b790c33"
+      },
+      "source": "cast mktx",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast mktx --private-key $PRIV --chain 137 --nonce 5 --gas-limit 21000 --gas-price 80000000000 --priority-gas-price 50000000000 --value 1000000000000000000 0x000000000000000000000000000000000000dEaD"
+    },
+
+    {
+      "id": "phase3a.tx.arbitrum_transfer",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 42161,
+          "nonce": 3,
+          "to": "0x000000000000000000000000000000000000dEaD",
+          "value": "500000000000000000",
+          "gasLimit": 21000,
+          "maxFeePerGas": "100000000",
+          "maxPriorityFeePerGas": "0",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f87082a4b103808405f5e10082520894000000000000000000000000000000000000dead8806f05b59d3b2000080c001a0914cbf440e67025fb7e5d97056319d8d4d41d44ceeabfaa8bc1507f9c7d1f9a9a05dc8901d485fec6294e6699647baa77d18e6ba9a3339996e32109db6d26a706c",
+        "tx_hash": "0x4c400107fdaa11c165574f335733514d33c51271c63897becc9d23d11d5644a9"
+      },
+      "source": "cast mktx",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast mktx --private-key $PRIV --chain 42161 --nonce 3 --gas-limit 21000 --gas-price 100000000 --priority-gas-price 0 --value 500000000000000000 0x000000000000000000000000000000000000dEaD"
+    },
+
+    {
+      "id": "xrp.address.abandon_account0",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "xrp" }
+      },
+      "expected": {
+        "address": "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3"
+      },
+      "source": "bip_utils 2.x BIP-44 derivation at m/44'/144'/0'/0/0 -> XRPL classic address (SHA256 -> RIPEMD160 -> XRPL base58check)",
+      "source_url": "tools/xrp-vector-capture/captures/abandon_account0.address",
+      "capture_cmd": "tools/xrp-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "xrp.sign_tx.payment_with_dt",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "{\"TransactionType\":\"Payment\",\"Account\":\"rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3\",\"Destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"DestinationTag\":12345,\"Amount\":\"1000000\",\"Fee\":\"12\",\"Sequence\":1,\"Flags\":0}"
+        }
+      },
+      "expected": {
+        "signed_hex": "120000220000000024000000012E000030396140000000000F424068400000000000000C7321031D68BC1A142E6766B2BDFB006CCFE135EF2E0E2E94ABB5CF5C9AB6104776FBAE7446304402201D48F70BDAB0B171596918ED373907A3503454078C83550354EE436A561071E402203D8D24B3A0517B8163696855823CC0FFFA29FA78022B76D54B83276184CF4A758114AFF3C2E33458B30714CA16FFEE19952DD35C17C88314F667B0CA50CC7709A220B0561B85E53A48461FA8",
+        "tx_hash": "D56E418F77EC187B70BC32EB32BE7078F84300E3E28E45008A31A98445F3FB31"
+      },
+      "source": "xrpl-py 4.5 + bip_utils 2.x (BIP-44 coin type 144); canonical XRPL binary serialization with RFC-6979 + DER + SHA512Half",
+      "source_url": "tools/xrp-vector-capture/captures/payment_dt.signed.json",
+      "capture_cmd": "tools/xrp-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "xrp.sign_tx.offer_create",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "{\"TransactionType\":\"OfferCreate\",\"Account\":\"rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3\",\"TakerGets\":\"10000000\",\"TakerPays\":{\"currency\":\"USD\",\"issuer\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"value\":\"1.5\"},\"Fee\":\"12\",\"Sequence\":2,\"Flags\":0}"
+        }
+      },
+      "expected": {
+        "signed_hex": "1200072200000000240000000264D485543DF729C0000000000000000000000000005553440000000000F667B0CA50CC7709A220B0561B85E53A48461FA865400000000098968068400000000000000C7321031D68BC1A142E6766B2BDFB006CCFE135EF2E0E2E94ABB5CF5C9AB6104776FBAE74473045022100CAB95E0695664C92188DD9E9195ACB02DFAE6B7D6F1BA781A63C19DF3ABA45DC022053663BCF5075ECEE83A86AA1B527A997F347B4B7C6BC70AA97AF0DF9E034CFE18114AFF3C2E33458B30714CA16FFEE19952DD35C17C8",
+        "tx_hash": "D88435A7BE3052CFC1B060362F383CF44F7C885411582F1B74DD975E2808F70D"
+      },
+      "source": "xrpl-py 4.5 + bip_utils 2.x (BIP-44 coin type 144); canonical XRPL binary serialization with RFC-6979 + DER + SHA512Half; issued-currency amount uses XRPL 64-bit float encoding",
+      "source_url": "tools/xrp-vector-capture/captures/offer_create.signed.json",
+      "capture_cmd": "tools/xrp-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "xrp.error.invalid_json",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "not-json"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "xrp_invalid_json"
+      },
+      "source": "Phase 3 error-path definition",
+      "source_url": "spec/errors.md#phase-3--xrp-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "xrp.error.missing_transaction_type",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "{\"Account\":\"rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3\"}"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "xrp_missing_required_field:TransactionType"
+      },
+      "source": "Phase 3 error-path definition",
+      "source_url": "spec/errors.md#phase-3--xrp-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "xrp.error.missing_account",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "{\"TransactionType\":\"Payment\"}"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "xrp_missing_required_field:Account"
+      },
+      "source": "Phase 3 error-path definition; exercises the second iteration of the required-field check in sign_xrp_tx so a separate distinct reason value is emitted from xrp.error.missing_transaction_type",
+      "source_url": "spec/errors.md#phase-3--xrp-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "sol.address.abandon_account_0",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "solana" }
+      },
+      "expected": {
+        "address": "B9sVeu4rJU12oUrUtzjc6BSNuEXdfvurZkdcaTVkP2LY"
+      },
+      "source": "bip_utils 2.x Bip44Coins.SOLANA at m/44'/501'/0'/0'/0' (Phantom/Solflare default, all hardened — SLIP-10 ed25519 requirement)",
+      "source_url": "tools/sol-vector-capture/captures/abandon_account_0.pubkey_b58",
+      "capture_cmd": "tools/sol-vector-capture/capture.sh"
+    },
+
+    {
+      "id": "sol.sign_tx.system_transfer_v0",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "solana",
+          "message_base64": "gAEAAQOW2pwI8HA/dJ/RTmMKK4HZEJqajxe3reGJUugusrXkMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4LQlCklHfVZUGTLbO232Pc04y4wnkYGXnwZ/n1aj31QECAgABDAIAAABAQg8AAAAAAAA=",
+          "recent_blockhash": "4nHfMbJDp1HJk4SbnzKKM9qhSqMzM6XnxNvY2KrA9HEt"
+        }
+      },
+      "expected": {
+        "signed_hex": "01d82ddbc81b0ea108078653e28df63e4d5e2ced36ebc3d5fbf098bf14f1147526f2f6c0df255bf678e16b34d2d7a8291f92a630a2dff8f8993d89f357c14c7b0a800100010396da9c08f0703f749fd14e630a2b81d9109a9a8f17b7ade18952e82eb2b5e43100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000382d09429251df5595064cb6cedb7d8f734e32e309e46065e7c19fe7d5a8f7d501020200010c0200000040420f000000000000",
+        "tx_hash": "5KgbB5V2G99DBQm6rqvokpiVZxLo8v3sTTqyYchVvgi7nmnjNWUfBVDBCpfStSWonsAcsKKrphKny7VTB9anAZ45"
+      },
+      "source": "solders 0.27 VersionedTransaction(MessageV0.try_compile(...), [Keypair.from_seed(...)]) — System Program transfer of 1_000_000 lamports. Deterministic blockhash 4nHfMb… chosen so the vector reproduces offline (no live RPC needed). tx_hash holds the first-signature base58 since Solana addresses txs by their first signature.",
+      "source_url": "tools/sol-vector-capture/captures/system_transfer_v0.signed.json",
+      "capture_cmd": "tools/sol-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "sol.sign_tx.with_alt_v0",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "solana",
+          "message_base64": "gAEAAQKW2pwI8HA/dJ/RTmMKK4HZEJqajxe3reGJUugusrXkMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOC0JQpJR31WVBky2ztt9j3NOMuMJ5GBl58Gf59Wo99UBAQIAAgwCAAAAgIQeAAAAAAAB0EqyMnQrtKs6E2i9RhXk5tAiSrcaAWuvhSCjMsl3hzcBAAA=",
+          "recent_blockhash": "4nHfMbJDp1HJk4SbnzKKM9qhSqMzM6XnxNvY2KrA9HEt"
+        }
+      },
+      "expected": {
+        "signed_hex": "0140bc65a0519c8b7145f21c5184d65e24bc4bcb04a0ecad8384ae5e3512a076be5e8d6ca44e7169084ddb27cebe5a7e725e76d44ecb709ceda747c88d9ca44e03800100010296da9c08f0703f749fd14e630a2b81d9109a9a8f17b7ade18952e82eb2b5e4310000000000000000000000000000000000000000000000000000000000000000382d09429251df5595064cb6cedb7d8f734e32e309e46065e7c19fe7d5a8f7d501010200020c0200000080841e000000000001d04ab232742bb4ab3a1368bd4615e4e6d0224ab71a016baf8520a332c9778737010000",
+        "tx_hash": "2J4xGUpYfkzFgEPmsqiD7DxLyKn53cF9oe6d6Tbds5WnPesMrqY1KhH6XRKhFF5e2CjDpJj2pjCMiaaRP6oU7trW"
+      },
+      "source": "solders 0.27 MessageV0 with one Address Lookup Table referenced (LUT key derived from 0x11*32 seed; addresses inside the LUT are the WSOL mint + 11…12 burn addr). Broadens v0 coverage past the simple no-ALT shape.",
+      "source_url": "tools/sol-vector-capture/captures/with_alt_v0.signed.json",
+      "capture_cmd": "tools/sol-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "sol.sign_message.raw_hello",
+      "kind": "sign_message",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "message": {
+          "kind": "solana",
+          "message_base64": "aGVsbG8gc29sYW5h"
+        }
+      },
+      "expected": {
+        "signature_hex": "SN7b6geysy8TVs7xWkJhQecHWLgjPYyhE6nE7T9831D76KA4UmtGUodrTJMHD3Up4hwh6BbJQ8237ni2UEvSAEx"
+      },
+      "source": "PyNaCl SigningKey(seed).sign(b\"hello solana\").signature, base58-encoded. Solana has no canonical message scheme (no BIP-322/EIP-191 equivalent); wallets sign raw bytes — Phantom/Solflare convention. signature_hex carries the base58 sig string by Phase 1 convention of using `signature_hex` regardless of encoding.",
+      "source_url": "tools/sol-vector-capture/captures/sign_message.signed.json",
+      "capture_cmd": "tools/sol-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "sol.error.invalid_base64_tx",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "solana",
+          "message_base64": "!!! not base64 !!!",
+          "recent_blockhash": "4nHfMbJDp1HJk4SbnzKKM9qhSqMzM6XnxNvY2KrA9HEt"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "sol_invalid_base64"
+      },
+      "source": "Phase 3c error-path definition",
+      "source_url": "spec/errors.md#phase-3--sol-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "sol.error.unsupported_version",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "solana",
+          "message_base64": "AAAAAAAA",
+          "recent_blockhash": "4nHfMbJDp1HJk4SbnzKKM9qhSqMzM6XnxNvY2KrA9HEt"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "sol_message_unsupported_version"
+      },
+      "source": "Phase 3c error-path definition — 6 zero bytes is valid base64 but won't deserialize as a VersionedMessage",
+      "source_url": "spec/errors.md#phase-3--sol-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "sol.error.blockhash_mismatch",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "solana",
+          "message_base64": "gAEAAQOW2pwI8HA/dJ/RTmMKK4HZEJqajxe3reGJUugusrXkMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4LQlCklHfVZUGTLbO232Pc04y4wnkYGXnwZ/n1aj31QECAgABDAIAAABAQg8AAAAAAAA=",
+          "recent_blockhash": "11111111111111111111111111111112"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "sol_blockhash_mismatch"
+      },
+      "source": "Phase 3c error-path definition — the message embeds 4nHfMb… but the supplied recent_blockhash is the system-program-shaped one. Catches caller bugs where the blockhash is fetched separately and stale.",
+      "source_url": "spec/errors.md#phase-3--sol-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "sol.error.invalid_base64_message",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "message": {
+          "kind": "solana",
+          "message_base64": "$$$ not base64 $$$"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedSignableMessage",
+        "reason": "sol_invalid_base64"
+      },
+      "source": "Phase 3c error-path definition — sign_sol_message rejects non-base64 payloads",
+      "source_url": "spec/errors.md#phase-3--sol-malformed_signable_message-reasons",
       "capture_cmd": "n/a"
     }
   ]
