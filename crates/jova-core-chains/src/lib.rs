@@ -19,3 +19,4 @@ pub use evm::EvmSigner;
 pub use signable_message::SignableMessage;
 pub use signer::ChainSigner;
 pub use unsigned_tx::{AccessListItem, EvmUnsigned, UnsignedTx};
+pub use xrp::XrpSigner;

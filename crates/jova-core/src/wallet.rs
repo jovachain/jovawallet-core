@@ -1,5 +1,5 @@
 use jova_core_chains::{
-    Address, BtcSigner, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx,
+    Address, BtcSigner, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx, XrpSigner,
     evm::EvmSigner,
 };
 use jova_core_primitives::{DerivationPath, Mnemonic, Seed, derive_secp256k1};
@@ -30,6 +30,10 @@ impl JovaWallet {
                 let xprv = self.derive_for(chain)?;
                 Ok(BtcSigner.derive_address(&xprv)?)
             }
+            JovaChain::Xrp => {
+                let xprv = self.derive_for(chain)?;
+                Ok(XrpSigner.derive_address(&xprv)?)
+            }
             c if c.evm_chain_id().is_some() => {
                 let signer = self.evm_signer(c)?;
                 let xprv = self.derive_for(c)?;
@@ -59,6 +63,10 @@ impl JovaWallet {
             UnsignedTx::Bitcoin { .. } => {
                 let xprv = self.derive_path("m/84'/0'/0'/0/0")?;
                 Ok(BtcSigner.sign_tx(&xprv, unsigned)?)
+            }
+            UnsignedTx::Xrp { .. } => {
+                let xprv = self.derive_path("m/44'/144'/0'/0/0")?;
+                Ok(XrpSigner.sign_tx(&xprv, unsigned)?)
             }
         }
     }
@@ -135,6 +143,7 @@ fn static_chain_label(id: u64) -> &'static str {
 pub fn is_valid_address(addr: &str, chain: &JovaChain) -> bool {
     match chain {
         JovaChain::Bitcoin => jova_core_chains::btc::validate_btc_address(addr),
+        JovaChain::Xrp => jova_core_chains::xrp::validate_xrp_address(addr),
         c if c.evm_chain_id().is_some() => jova_core_chains::evm::validate_address(addr),
         _ => false,
     }
