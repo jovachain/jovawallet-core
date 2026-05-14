@@ -1,7 +1,8 @@
 use jova_core_chains::btc::{derive_p2wpkh, validate_btc_address};
 use jova_core_primitives::{DerivationPath, Mnemonic, derive_secp256k1};
 
-const BIP84_MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+const BIP84_MNEMONIC: &str =
+    "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
 fn xprv_at(path_str: &str) -> jova_core_primitives::XPrv {
     let seed = Mnemonic::to_seed(BIP84_MNEMONIC, "").expect("seed");
@@ -29,9 +30,15 @@ fn bip84_first_change_address_matches_official_vector() {
 
 #[test]
 fn validates_known_bech32_mainnet_addresses() {
-    assert!(validate_btc_address("bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"));
-    assert!(validate_btc_address("bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g"));
-    assert!(validate_btc_address("bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el"));
+    assert!(validate_btc_address(
+        "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
+    ));
+    assert!(validate_btc_address(
+        "bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g"
+    ));
+    assert!(validate_btc_address(
+        "bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el"
+    ));
 }
 
 #[test]

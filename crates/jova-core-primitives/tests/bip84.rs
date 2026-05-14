@@ -5,7 +5,8 @@ use jova_core_primitives::{Mnemonic, derive_secp256k1};
 // BIP-84 official test vector mnemonic (12 words).
 // Source: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
 #[cfg(not(miri))]
-const BIP84_VECTOR_MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+const BIP84_VECTOR_MNEMONIC: &str =
+    "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
 #[test]
 #[cfg(not(miri))] // secp256k1 uses extern static (C FFI); miri cannot analyse it

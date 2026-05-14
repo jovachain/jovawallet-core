@@ -2,5 +2,7 @@
 //! and BIP-322 message signing.
 
 pub mod address;
+pub mod psbt;
 
 pub use address::{derive_p2wpkh, validate_btc_address};
+pub use psbt::{PsbtSignResult, sign_psbt};
