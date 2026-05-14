@@ -9,13 +9,7 @@ const MNEMONIC: &str =
 
 /// Phantom/Solflare canonical path: m/44'/501'/0'/0'/0' (all hardened).
 fn sol_path() -> [u32; 5] {
-    [
-        HARDENED | 44,
-        HARDENED | 501,
-        HARDENED,
-        HARDENED,
-        HARDENED,
-    ]
+    [HARDENED | 44, HARDENED | 501, HARDENED, HARDENED, HARDENED]
 }
 
 #[test]

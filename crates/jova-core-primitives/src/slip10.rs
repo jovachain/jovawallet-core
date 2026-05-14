@@ -114,13 +114,17 @@ pub fn derive_ed25519(
 ) -> Result<Ed25519Xprv, Ed25519DeriveError> {
     // Master-key generation: HMAC-SHA512(salt = "ed25519 seed", data = seed).
     // IL becomes the master secret scalar; IR becomes the master chain code.
-    let mut hmac = HmacSha512::new_from_slice(ED25519_SEED_KEY).map_err(|_| Ed25519DeriveError::Slip10)?;
+    let mut hmac =
+        HmacSha512::new_from_slice(ED25519_SEED_KEY).map_err(|_| Ed25519DeriveError::Slip10)?;
     hmac.update(seed.as_bytes());
     let result = hmac.finalize().into_bytes();
 
-    let mut secret: [u8; 32] = result[..32].try_into().map_err(|_| Ed25519DeriveError::Slip10)?;
-    let mut chain_code: [u8; 32] =
-        result[32..].try_into().map_err(|_| Ed25519DeriveError::Slip10)?;
+    let mut secret: [u8; 32] = result[..32]
+        .try_into()
+        .map_err(|_| Ed25519DeriveError::Slip10)?;
+    let mut chain_code: [u8; 32] = result[32..]
+        .try_into()
+        .map_err(|_| Ed25519DeriveError::Slip10)?;
 
     // Walk the path. Each step is HMAC-SHA512(chain_code, 0x00 || parent_key || ser32(i)).
     // ed25519 SLIP-10 requires every component to be hardened.
@@ -149,9 +153,12 @@ fn ckd_priv(
     hmac.update(&index.to_be_bytes());
 
     let result = hmac.finalize().into_bytes();
-    let il: [u8; 32] = result[..32].try_into().map_err(|_| Ed25519DeriveError::Slip10)?;
-    let child_chain_code: [u8; 32] =
-        result[32..].try_into().map_err(|_| Ed25519DeriveError::Slip10)?;
+    let il: [u8; 32] = result[..32]
+        .try_into()
+        .map_err(|_| Ed25519DeriveError::Slip10)?;
+    let child_chain_code: [u8; 32] = result[32..]
+        .try_into()
+        .map_err(|_| Ed25519DeriveError::Slip10)?;
     // ed25519 SLIP-10: the child secret IS IL (no group-order reduction). All
     // 32-byte values are valid secret scalars.
     Ok((il, child_chain_code))

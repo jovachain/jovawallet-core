@@ -90,6 +90,14 @@ func decodeUnsignedTx(_ dict: [String: Any]) throws -> UnsignedTx {
             throw VectorDecodeError.missingField("tx_json")
         }
         return .xrp(txJson: txJson)
+    case "solana":
+        guard let msg = dict["message_base64"] as? String else {
+            throw VectorDecodeError.missingField("message_base64")
+        }
+        guard let bh = dict["recent_blockhash"] as? String else {
+            throw VectorDecodeError.missingField("recent_blockhash")
+        }
+        return .solana(messageBase64: msg, recentBlockhash: bh)
     default:
         throw VectorDecodeError.unknownUnsignedTxKind(kind)
     }
@@ -131,6 +139,11 @@ func decodeSignableMessage(_ dict: [String: Any]) throws -> SignableMessage {
         }
         let scheme = try decodeBtcMsgScheme(schemeStr)
         return .bitcoin(message: msg, address: addr, scheme: scheme)
+    case "solana":
+        guard let msgB64 = dict["message_base64"] as? String else {
+            throw VectorDecodeError.missingField("message_base64")
+        }
+        return .solana(messageBase64: msgB64)
     default:
         throw VectorDecodeError.unknownMessageKind(kind)
     }

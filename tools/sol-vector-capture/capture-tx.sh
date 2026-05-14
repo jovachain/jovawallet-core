@@ -100,7 +100,7 @@ def emit(name: str, msg: MessageV0) -> None:
     print(f"{name}: signed_hex[:48]={vt_bytes.hex()[:48]}…  sig_b58[:20]={payload['signature_b58'][:20]}…")
 
 
-# 1. System Program transfer.
+# 1. System Program transfer (no ALT).
 sender = kp.pubkey()
 receiver = Pubkey.from_string("11111111111111111111111111111112")
 ixns = [
@@ -110,6 +110,26 @@ ixns = [
 ]
 msg1 = MessageV0.try_compile(sender, ixns, [], FAKE_BLOCKHASH)
 emit("system_transfer_v0", msg1)
+
+# 2. VersionedTransaction with Address Lookup Table — broadens v0 coverage.
+# The LUT is fabricated (its key is derived from a deterministic seed) but
+# byte-equality at signing time only cares about the on-wire encoding, not
+# whether the LUT account actually exists on-chain.
+from solders.address_lookup_table_account import AddressLookupTableAccount
+
+LUT_SEED = bytes.fromhex("11" * 32)
+lut_key = Keypair.from_seed(LUT_SEED).pubkey()
+alt_receiver = Pubkey.from_string("So11111111111111111111111111111111111111112")
+alt_filler = Pubkey.from_string("11111111111111111111111111111112")
+lut = AddressLookupTableAccount(key=lut_key, addresses=[alt_receiver, alt_filler])
+
+ixns_alt = [
+    transfer(
+        TransferParams(from_pubkey=sender, to_pubkey=alt_receiver, lamports=2_000_000)
+    )
+]
+msg_alt = MessageV0.try_compile(sender, ixns_alt, [lut], FAKE_BLOCKHASH)
+emit("with_alt_v0", msg_alt)
 
 # 2. Raw ed25519 message signing — sign arbitrary bytes (not a Solana
 # message wire-form). Output is just the base58 signature.

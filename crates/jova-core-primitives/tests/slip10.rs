@@ -16,13 +16,7 @@ const MNEMONIC: &str =
 /// Standard Solana BIP-44 path used by Phantom / Solflare and bip_utils:
 /// m/44'/501'/0'/0'/0' (all hardened).
 fn sol_path() -> [u32; 5] {
-    [
-        HARDENED | 44,
-        HARDENED | 501,
-        HARDENED,
-        HARDENED,
-        HARDENED,
-    ]
+    [HARDENED | 44, HARDENED | 501, HARDENED, HARDENED, HARDENED]
 }
 
 #[test]
@@ -33,9 +27,10 @@ fn slip10_ed25519_matches_bip_utils_for_abandon_seed() {
     let expected_pub_hex =
         include_str!("../../../tools/sol-vector-capture/captures/abandon_account_0.pubkey_hex")
             .trim();
-    let expected_priv_hex =
-        include_str!("../../../tools/sol-vector-capture/captures/abandon_account_0.private_key_hex")
-            .trim();
+    let expected_priv_hex = include_str!(
+        "../../../tools/sol-vector-capture/captures/abandon_account_0.private_key_hex"
+    )
+    .trim();
 
     assert_eq!(
         hex::encode(xprv.public_key()),

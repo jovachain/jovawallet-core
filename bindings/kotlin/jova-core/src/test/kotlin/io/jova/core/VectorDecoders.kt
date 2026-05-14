@@ -59,6 +59,10 @@ fun decodeUnsignedTx(o: JSONObject): UnsignedTx = when (val kind = o.getString("
     "evm"     -> UnsignedTx.Evm(tx = decodeEvmUnsigned(o))
     "bitcoin" -> UnsignedTx.Bitcoin(psbtBase64 = o.getString("psbt_base64"))
     "xrp"     -> UnsignedTx.Xrp(txJson = o.getString("tx_json"))
+    "solana"  -> UnsignedTx.Solana(
+        messageBase64    = o.getString("message_base64"),
+        recentBlockhash  = o.getString("recent_blockhash")
+    )
     else      -> throw VectorDecodeException("unknown unsigned_tx kind: $kind")
 }
 
@@ -80,5 +84,6 @@ fun decodeSignableMessage(o: JSONObject): SignableMessage = when (val kind = o.g
         address = o.getString("address"),
         scheme = decodeBtcMsgScheme(o.getString("scheme"))
     )
+    "solana"          -> SignableMessage.Solana(messageBase64 = o.getString("message_base64"))
     else              -> throw VectorDecodeException("unknown message kind: $kind")
 }

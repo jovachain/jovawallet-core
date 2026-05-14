@@ -16,10 +16,7 @@ use crate::error::ChainError;
 
 /// Sign an arbitrary base64-encoded byte payload with the wallet's ed25519
 /// key. Returns the 64-byte signature in base58 encoding (Solana convention).
-pub fn sign_sol_message(
-    xprv: &Ed25519Xprv,
-    message_base64: &str,
-) -> Result<String, ChainError> {
+pub fn sign_sol_message(xprv: &Ed25519Xprv, message_base64: &str) -> Result<String, ChainError> {
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(message_base64)
         .map_err(|_| ChainError::MalformedSignableMessage("sol_invalid_base64".into()))?;

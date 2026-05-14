@@ -1,7 +1,6 @@
 use jova_core_chains::{
     Address, BtcSigner, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx, XrpSigner,
-    evm::EvmSigner,
-    sol::SolSigner,
+    evm::EvmSigner, sol::SolSigner,
 };
 use jova_core_primitives::{
     DerivationPath, Ed25519Xprv, Mnemonic, Seed, derive_ed25519, derive_secp256k1,

@@ -80,3 +80,25 @@ or hex-decode failure after the `:`.
 | `xrp_encode_hex:{upstream}` | `crates/jova-core-chains/src/xrp/tx.rs` | the hex string returned by `encode` failed `hex::decode` while preparing the `TXN\0` prefixed payload for the tx_hash digest (canonically unreachable) |
 | `xrp_address_encode_failed:{upstream}` | `crates/jova-core-chains/src/xrp/address.rs` | `xrpl-rust` failed to base58check-encode the 20-byte AccountID into a classic `r…` address (canonically unreachable) |
 
+## Phase 3 — SOL (`malformed_unsigned_tx` reasons)
+
+| Reason | Means |
+|---|---|
+| `sol_invalid_base64` | `message_base64` failed base64 decode |
+| `sol_message_unsupported_version` | base64 decoded but the bytes don't bincode-deserialize as a `VersionedMessage` (e.g. unknown version prefix, truncated payload, malformed short_vec) |
+| `sol_blockhash_mismatch` | the supplied `recent_blockhash` does not match the blockhash embedded inside the deserialized message (catches stale-blockhash caller bugs) |
+| `expected_solana_variant` | Internal: routing mismatch (caller invoked `SolSigner.sign_tx` with a non-`UnsignedTx::Solana`) |
+
+## Phase 3 — SOL (`malformed_signable_message` reasons)
+
+| Reason | Means |
+|---|---|
+| `sol_invalid_base64` | `message_base64` failed base64 decode (raw ed25519 message signing) |
+| `expected_solana_message` | Internal: routing mismatch (caller invoked `SolSigner.sign_message` with a non-`SignableMessage::Solana`) |
+
+## Phase 3 — SOL (`signing_failed` reasons)
+
+| Reason | Where | Means |
+|---|---|---|
+| `sol_tx_serialize_failed:{upstream}` | `crates/jova-core-chains/src/sol/tx.rs` | bincode-serialization of the fully-signed `VersionedTransaction` failed (canonically unreachable for a successfully-deserialized message) |
+

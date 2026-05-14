@@ -41,15 +41,13 @@ pub fn sign_sol_tx(
     recent_blockhash: &str,
 ) -> Result<(String, String), ChainError> {
     // 1. base64 → bytes.
-    let wire_bytes = base64_decode(message_base64).map_err(|_| {
-        ChainError::MalformedUnsignedTx("sol_invalid_base64".into())
-    })?;
+    let wire_bytes = base64_decode(message_base64)
+        .map_err(|_| ChainError::MalformedUnsignedTx("sol_invalid_base64".into()))?;
 
     // 2. bincode-deserialize as VersionedMessage. Any prefix-byte error or
     // structural mismatch maps to `sol_message_unsupported_version`.
-    let message: VersionedMessage = bincode_deserialize(&wire_bytes).map_err(|_| {
-        ChainError::MalformedUnsignedTx("sol_message_unsupported_version".into())
-    })?;
+    let message: VersionedMessage = bincode_deserialize(&wire_bytes)
+        .map_err(|_| ChainError::MalformedUnsignedTx("sol_message_unsupported_version".into()))?;
 
     // 3. Blockhash binding.
     let parsed_bh = message.recent_blockhash().to_string();
@@ -72,9 +70,8 @@ pub fn sign_sol_tx(
         signatures: vec![sig],
         message,
     };
-    let signed_bytes = bincode_serialize(&tx).map_err(|e| {
-        ChainError::SigningFailed(format!("sol_tx_serialize_failed:{e}"))
-    })?;
+    let signed_bytes = bincode_serialize(&tx)
+        .map_err(|e| ChainError::SigningFailed(format!("sol_tx_serialize_failed:{e}")))?;
 
     let signed_hex = hex::encode(&signed_bytes);
     let signature_b58 = bs58::encode(sig_bytes).into_string();
