@@ -97,10 +97,15 @@ class EvmVectorsTest {
             val pass = if (input.has("passphrase")) input.getString("passphrase") else ""
             val messageDict = input.getJSONObject("message")
 
+            // Phase 2 added BTC sign_message vectors with `message.kind == "bitcoin"`;
+            // those are exercised by BtcVectorsTest. Skip them here. (The decoder
+            // used to throw on non-EVM kinds; now it returns Bitcoin variants too.)
+            val msgKind = messageDict.getString("kind")
+            if (msgKind != "evmPersonalSign" && msgKind != "evmTypedDataV4") continue
+
             val signable = try {
                 decodeSignableMessage(messageDict)
             } catch (e: VectorDecodeException) {
-                // Skip non-EVM message kinds (Phase 2/3 will cover them).
                 continue
             }
 
