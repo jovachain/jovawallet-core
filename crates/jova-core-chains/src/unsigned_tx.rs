@@ -4,11 +4,15 @@ use serde::{Deserialize, Serialize};
 #[serde(tag = "kind", rename_all = "lowercase")]
 pub enum UnsignedTx {
     Evm(EvmUnsigned),
-    Bitcoin { psbt_base64: String },
+    Bitcoin {
+        psbt_base64: String,
+    },
     /// XRPL transaction: a JSON object (canonical XRPL field-naming) carrying
     /// the unsigned transaction. The signer injects `SigningPubKey` and
     /// `TxnSignature` itself; callers must NOT pre-populate those fields.
-    Xrp { tx_json: String },
+    Xrp {
+        tx_json: String,
+    },
     // Phase 3c adds: Solana.
 }
 

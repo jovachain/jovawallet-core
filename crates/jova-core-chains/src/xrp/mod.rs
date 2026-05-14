@@ -54,7 +54,9 @@ impl ChainSigner for XrpSigner {
                     tx_hash,
                 })
             }
-            _ => Err(ChainError::MalformedUnsignedTx("expected_xrp_variant".into())),
+            _ => Err(ChainError::MalformedUnsignedTx(
+                "expected_xrp_variant".into(),
+            )),
         }
     }
 

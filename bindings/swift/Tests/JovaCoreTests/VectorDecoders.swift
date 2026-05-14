@@ -70,7 +70,8 @@ func decodeEvmUnsigned(_ dict: [String: Any]) throws -> EvmUnsigned {
 }
 
 /// Decode an `input.unsigned_tx` dict into the uniffi `UnsignedTx` enum.
-/// Supports `"evm"` and `"bitcoin"` kinds; later phases extend this switch.
+/// Supports `"evm"`, `"bitcoin"`, and `"xrp"` kinds; later phases extend this
+/// switch (e.g. `"solana"`).
 func decodeUnsignedTx(_ dict: [String: Any]) throws -> UnsignedTx {
     guard let kind = dict["kind"] as? String else {
         throw VectorDecodeError.missingField("kind")
@@ -84,6 +85,11 @@ func decodeUnsignedTx(_ dict: [String: Any]) throws -> UnsignedTx {
             throw VectorDecodeError.missingField("psbt_base64")
         }
         return .bitcoin(psbtBase64: psbt)
+    case "xrp":
+        guard let txJson = dict["tx_json"] as? String else {
+            throw VectorDecodeError.missingField("tx_json")
+        }
+        return .xrp(txJson: txJson)
     default:
         throw VectorDecodeError.unknownUnsignedTxKind(kind)
     }

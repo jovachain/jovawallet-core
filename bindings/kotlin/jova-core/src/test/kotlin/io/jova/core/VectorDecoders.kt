@@ -51,12 +51,14 @@ fun decodeEvmUnsigned(o: JSONObject): EvmUnsigned {
 
 /**
  * Decode an `input.unsigned_tx` JSON object into the uniffi `UnsignedTx` enum.
- * Routes by the `kind` discriminator: `"evm"` and `"bitcoin"` are supported.
- * Phase 3+ kinds throw `VectorDecodeException` (callers `continue` past them).
+ * Routes by the `kind` discriminator: `"evm"`, `"bitcoin"`, and `"xrp"` are
+ * supported. Future kinds (e.g. `"solana"`) throw `VectorDecodeException`
+ * (callers `continue` past them).
  */
 fun decodeUnsignedTx(o: JSONObject): UnsignedTx = when (val kind = o.getString("kind")) {
     "evm"     -> UnsignedTx.Evm(tx = decodeEvmUnsigned(o))
     "bitcoin" -> UnsignedTx.Bitcoin(psbtBase64 = o.getString("psbt_base64"))
+    "xrp"     -> UnsignedTx.Xrp(txJson = o.getString("tx_json"))
     else      -> throw VectorDecodeException("unknown unsigned_tx kind: $kind")
 }
 
