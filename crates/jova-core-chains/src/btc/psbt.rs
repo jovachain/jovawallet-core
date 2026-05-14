@@ -120,7 +120,13 @@ pub fn sign_psbt(xprv: &XPrv, psbt_base64: &str) -> Result<PsbtSignResult, Chain
     let mut signed: Vec<(usize, EcdsaSignature)> = Vec::with_capacity(to_sign.len());
     for (index, sighash_bytes) in &to_sign {
         let msg = Message::from_digest(*sighash_bytes);
-        let mut sig = secp.sign_ecdsa(&msg, &sk);
+        // sign_ecdsa_low_r grinds the nonce until R has its high bit clear,
+        // yielding a 71-byte DER signature ~half the time and a 70-byte one
+        // the other half (vs. an unconditional 71/72 split from sign_ecdsa).
+        // Bitcoin Core has produced low-R signatures by default since v0.17
+        // (2018) — matching this is what makes BIP-143 outputs byte-stable
+        // against bitcoind, bdk-cli, embit, and other reference signers.
+        let mut sig = secp.sign_ecdsa_low_r(&msg, &sk);
         sig.normalize_s();
         let bitcoin_sig = EcdsaSignature {
             signature: sig,
