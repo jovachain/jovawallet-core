@@ -64,12 +64,14 @@ use bitcoin::{
 };
 use core::str::FromStr;
 use jova_core_primitives::XPrv;
+use serde::{Deserialize, Serialize};
 
 use crate::btc::address::derive_p2wpkh;
 use crate::error::ChainError;
 
 /// Bitcoin message-signing scheme.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum BtcMsgScheme {
     /// BIP-322 simple (witness-based, modern). Returns
     /// `base64(witness_consensus_encoded)`.

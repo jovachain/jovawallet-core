@@ -1,5 +1,6 @@
 use jova_core_chains::{
-    Address, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx, evm::EvmSigner,
+    Address, BtcSigner, ChainSigner, SignableMessage, Signature, SignedTx, UnsignedTx,
+    evm::EvmSigner,
 };
 use jova_core_primitives::{DerivationPath, Mnemonic, Seed, derive_secp256k1};
 
@@ -21,14 +22,25 @@ impl JovaWallet {
     ///
     /// `_account` is reserved for future multi-account support;
     /// in v1 all EVM chains use the account at index 0 within
-    /// the m/44'/60'/0'/0/0 path.
+    /// the m/44'/60'/0'/0/0 path, and Bitcoin uses the BIP-84
+    /// m/84'/0'/0'/0/0 path.
     pub fn address(&self, chain: &JovaChain, _account: u32) -> Result<Address, JovaError> {
-        let signer = self.evm_signer(chain)?;
-        let xprv = self.derive_for(chain)?;
-        Ok(signer.derive_address(&xprv)?)
+        match chain {
+            JovaChain::Bitcoin => {
+                let xprv = self.derive_for(chain)?;
+                Ok(BtcSigner.derive_address(&xprv)?)
+            }
+            c if c.evm_chain_id().is_some() => {
+                let signer = self.evm_signer(c)?;
+                let xprv = self.derive_for(c)?;
+                Ok(signer.derive_address(&xprv)?)
+            }
+            other => Err(JovaError::UnsupportedChain(format!("{:?}", other))),
+        }
     }
 
     /// Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
+    /// For Bitcoin, the PSBT carries its own input descriptors.
     pub fn sign_tx(&self, unsigned: &UnsignedTx) -> Result<SignedTx, JovaError> {
         match unsigned {
             UnsignedTx::Evm(evm) => {
@@ -43,7 +55,11 @@ impl JovaWallet {
                 let mut signed = signer.sign_tx(&xprv, unsigned)?;
                 signed.chain = chain_label;
                 Ok(signed)
-            } // Phase 2+ adds Bitcoin, Solana, XRP arms here.
+            }
+            UnsignedTx::Bitcoin { .. } => {
+                let xprv = self.derive_path("m/84'/0'/0'/0/0")?;
+                Ok(BtcSigner.sign_tx(&xprv, unsigned)?)
+            }
         }
     }
 
@@ -56,7 +72,11 @@ impl JovaWallet {
                 };
                 let xprv = self.derive_path("m/44'/60'/0'/0/0")?;
                 Ok(signer.sign_message(&xprv, msg)?)
-            } // Phase 2+ adds Solana and Bitcoin arms.
+            }
+            SignableMessage::Bitcoin { .. } => {
+                let xprv = self.derive_path("m/84'/0'/0'/0/0")?;
+                Ok(BtcSigner.sign_message(&xprv, msg)?)
+            }
         }
     }
 
@@ -113,9 +133,9 @@ fn static_chain_label(id: u64) -> &'static str {
 
 /// Return `true` if `addr` is a valid address for `chain`.
 pub fn is_valid_address(addr: &str, chain: &JovaChain) -> bool {
-    if chain.evm_chain_id().is_some() {
-        jova_core_chains::evm::validate_address(addr)
-    } else {
-        false
+    match chain {
+        JovaChain::Bitcoin => jova_core_chains::btc::validate_btc_address(addr),
+        c if c.evm_chain_id().is_some() => jova_core_chains::evm::validate_address(addr),
+        _ => false,
     }
 }

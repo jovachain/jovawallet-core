@@ -1,9 +1,9 @@
 //! jova-core-ffi — uniffi bindings for the public JovaWallet API.
 //!
 //! Phase 1: exposes JovaWallet, chain/tx/message types, and free helpers.
-//! Phase 2 FFI variants (Bitcoin, Solana, Xrp) are declared here for
-//! forward compatibility; they return UnsupportedChain at runtime until
-//! Phase 2 implements them in jova-core.
+//! Phase 2: Bitcoin variants are now wired through to `jova-core` (BIP-84).
+//! Phase 3 FFI variants (Solana, Xrp) are declared here for forward
+//! compatibility; they return UnsupportedChain at runtime until implemented.
 
 #![forbid(unsafe_code)]
 
@@ -53,16 +53,15 @@ pub enum UnsignedTx {
     Evm {
         tx: EvmUnsigned,
     },
-    /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
     Bitcoin {
         psbt_base64: String,
     },
-    /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+    /// Phase 3 — declared for forward compatibility; returns UnsupportedChain until implemented.
     Solana {
         message_base64: String,
         recent_blockhash: String,
     },
-    /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+    /// Phase 3 — declared for forward compatibility; returns UnsupportedChain until implemented.
     Xrp {
         tx_json: String,
     },
@@ -84,11 +83,10 @@ pub enum SignableMessage {
     EvmTypedDataV4 {
         json: String,
     }, // dynamic schema; String is intentional
-    /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+    /// Phase 3 — declared for forward compatibility; returns UnsupportedChain until implemented.
     Solana {
         message_base64: String,
     },
-    /// Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
     Bitcoin {
         message: String,
         address: String,
@@ -189,10 +187,11 @@ fn ffi_chain_to_core(c: &JovaChain) -> Result<jova_core::JovaChain, FfiError> {
         JovaChain::Arbitrum => jova_core::JovaChain::Arbitrum,
         JovaChain::Optimism => jova_core::JovaChain::Optimism,
         JovaChain::Base => jova_core::JovaChain::Base,
+        JovaChain::Bitcoin => jova_core::JovaChain::Bitcoin,
         JovaChain::CustomEvm { chain_id } => jova_core::JovaChain::CustomEvm {
             chain_id: *chain_id,
         },
-        // Phase 2 chains: not yet in core; surface as UnsupportedChain.
+        // Phase 3 chains: not yet in core; surface as UnsupportedChain.
         other => {
             return Err(FfiError::UnsupportedChain {
                 chain: other.clone(),
@@ -242,10 +241,8 @@ fn ffi_unsigned_tx_to_core(t: UnsignedTx) -> Result<jova_core::UnsignedTx, FfiEr
                 })
                 .collect(),
         })),
-        // Phase 2 chains: not yet in core; surface as UnsupportedChain.
-        UnsignedTx::Bitcoin { .. } => Err(FfiError::UnsupportedChain {
-            chain: JovaChain::Bitcoin,
-        }),
+        UnsignedTx::Bitcoin { psbt_base64 } => Ok(jova_core::UnsignedTx::Bitcoin { psbt_base64 }),
+        // Phase 3 chains: not yet in core; surface as UnsupportedChain.
         UnsignedTx::Solana { .. } => Err(FfiError::UnsupportedChain {
             chain: JovaChain::Solana,
         }),
@@ -267,12 +264,24 @@ fn ffi_signable_message_to_core(
         SignableMessage::EvmTypedDataV4 { json } => {
             Ok(jova_core::SignableMessage::EvmTypedDataV4 { json })
         }
-        // Phase 2 chains: not yet in core; surface as UnsupportedChain.
+        SignableMessage::Bitcoin {
+            message,
+            address,
+            scheme,
+        } => {
+            let core_scheme = match scheme {
+                BtcMsgScheme::Bip322 => jova_core::BtcMsgScheme::Bip322,
+                BtcMsgScheme::Legacy => jova_core::BtcMsgScheme::Legacy,
+            };
+            Ok(jova_core::SignableMessage::Bitcoin {
+                message,
+                address,
+                scheme: core_scheme,
+            })
+        }
+        // Phase 3 chains: not yet in core; surface as UnsupportedChain.
         SignableMessage::Solana { .. } => Err(FfiError::UnsupportedChain {
             chain: JovaChain::Solana,
-        }),
-        SignableMessage::Bitcoin { .. } => Err(FfiError::UnsupportedChain {
-            chain: JovaChain::Bitcoin,
         }),
     }
 }

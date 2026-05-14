@@ -12,6 +12,7 @@ mod signer;
 mod unsigned_tx;
 
 pub use address::{Address, Signature, SignedTx};
+pub use btc::{BtcMsgScheme, BtcSigner};
 pub use error::ChainError;
 pub use evm::EvmSigner;
 pub use signable_message::SignableMessage;

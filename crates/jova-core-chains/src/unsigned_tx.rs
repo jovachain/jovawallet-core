@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 #[serde(tag = "kind", rename_all = "lowercase")]
 pub enum UnsignedTx {
     Evm(EvmUnsigned),
-    // Phase 2+ adds: Bitcoin, Solana, Xrp.
+    Bitcoin { psbt_base64: String },
+    // Phase 3+ adds: Solana, Xrp.
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

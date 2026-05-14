@@ -9,7 +9,8 @@ pub enum JovaChain {
     Arbitrum,
     Optimism,
     Base,
-    // Phase 2: Bitcoin, Solana, Xrp.
+    Bitcoin,
+    // Phase 3: Solana, Xrp.
     CustomEvm { chain_id: u64 },
 }
 
@@ -23,6 +24,7 @@ impl JovaChain {
             Self::Optimism => Some(10),
             Self::Base => Some(8453),
             Self::CustomEvm { chain_id } => Some(*chain_id),
+            Self::Bitcoin => None,
         }
     }
 
@@ -34,12 +36,16 @@ impl JovaChain {
             Self::Arbitrum => "arbitrum",
             Self::Optimism => "optimism",
             Self::Base => "base",
+            Self::Bitcoin => "bitcoin",
             Self::CustomEvm { .. } => "customEvm",
         }
     }
 
     pub(crate) fn derivation_path(&self) -> &'static str {
-        // All EVM chains share m/44'/60'/0'/0/0 in v1; account index applied separately.
-        "m/44'/60'/0'/0/0"
+        match self {
+            Self::Bitcoin => "m/84'/0'/0'/0/0",
+            // All EVM chains share m/44'/60'/0'/0/0 in v1; account index applied separately.
+            _ => "m/44'/60'/0'/0/0",
+        }
     }
 }
