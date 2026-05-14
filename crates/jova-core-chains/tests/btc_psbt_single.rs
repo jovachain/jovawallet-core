@@ -59,3 +59,25 @@ fn rejects_valid_base64_but_invalid_psbt() {
         ChainError::MalformedUnsignedTx("psbt_invalid_serialization".into()),
     );
 }
+
+#[test]
+fn rejects_psbt_with_no_signable_inputs() {
+    // The Task 3 PSBT, but using a DIFFERENT mnemonic so our derived pubkey
+    // doesn't match the witness program of any input.
+    let foreign_mnemonic =
+        "ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic";
+    let seed = Mnemonic::to_seed(foreign_mnemonic, "").expect("seed");
+    let path = DerivationPath::parse("m/84'/0'/0'/0/0").expect("path");
+    let xprv = derive_secp256k1(&seed, &path).expect("derive");
+
+    let result = sign_psbt(&xprv, UNSIGNED_PSBT_B64.trim());
+    match result {
+        Err(ChainError::MalformedUnsignedTx(reason)) => {
+            assert_eq!(reason, "psbt_no_signable_inputs");
+        }
+        other => panic!(
+            "expected MalformedUnsignedTx(\"psbt_no_signable_inputs\"), got {:?}",
+            other
+        ),
+    }
+}

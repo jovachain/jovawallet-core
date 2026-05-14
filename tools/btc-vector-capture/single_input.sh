@@ -27,7 +27,7 @@ mkdir -p "$CAPTURES"
 VENV="${BTC_CAPTURE_VENV:-/tmp/btc-venv}"
 if [[ ! -x "$VENV/bin/python3" ]]; then
     python3 -m venv "$VENV"
-    "$VENV/bin/pip" install --quiet embit
+    "$VENV/bin/pip" install --quiet "embit==0.8.0"
 fi
 
 "$VENV/bin/python3" - <<'PY' >"$CAPTURES/.tmp.out"

@@ -75,7 +75,7 @@ pub fn sign_psbt(xprv: &XPrv, psbt_base64: &str) -> Result<PsbtSignResult, Chain
     // We do this before mutating partial_sigs because SighashCache borrows
     // the unsigned tx, which lives inside the PSBT.
     let inputs_len = psbt.inputs.len();
-    let mut to_sign: Vec<(usize, [u8; 32], bitcoin::Amount, bitcoin::ScriptBuf)> = Vec::new();
+    let mut to_sign: Vec<(usize, [u8; 32])> = Vec::new();
     {
         let unsigned_tx = psbt.unsigned_tx.clone();
         let mut cache = SighashCache::new(&unsigned_tx);
@@ -103,7 +103,7 @@ pub fn sign_psbt(xprv: &XPrv, psbt_base64: &str) -> Result<PsbtSignResult, Chain
             let sighash = cache
                 .p2wpkh_signature_hash(index, spk, utxo.value, EcdsaSighashType::All)
                 .map_err(|e| ChainError::SigningFailed(format!("sighash_failed:{e}")))?;
-            to_sign.push((index, sighash.to_byte_array(), utxo.value, spk.clone()));
+            to_sign.push((index, sighash.to_byte_array()));
         }
     }
 
@@ -114,8 +114,11 @@ pub fn sign_psbt(xprv: &XPrv, psbt_base64: &str) -> Result<PsbtSignResult, Chain
     }
 
     // Sign each identified input. RFC 6979 deterministic + normalize_s gives
-    // a canonical signature: byte-stable across implementations.
-    for (index, sighash_bytes, _value, _spk) in &to_sign {
+    // a canonical signature: byte-stable across implementations. We retain the
+    // produced ecdsa::Signature alongside the index so the finalize pass can
+    // build the witness without re-signing or re-walking partial_sigs.
+    let mut signed: Vec<(usize, EcdsaSignature)> = Vec::with_capacity(to_sign.len());
+    for (index, sighash_bytes) in &to_sign {
         let msg = Message::from_digest(*sighash_bytes);
         let mut sig = secp.sign_ecdsa(&msg, &sk);
         sig.normalize_s();
@@ -124,12 +127,13 @@ pub fn sign_psbt(xprv: &XPrv, psbt_base64: &str) -> Result<PsbtSignResult, Chain
             sighash_type: EcdsaSighashType::All,
         };
         psbt.inputs[*index].partial_sigs.insert(our_pk, bitcoin_sig);
+        signed.push((*index, bitcoin_sig));
     }
 
-    // Decide whether we can fully finalize. A single-input PSBT that we
-    // signed is the canonical Phase 2 case; multi-input/multi-party stays
-    // unfinalized so the next signer can complete it.
-    let can_finalize = inputs_len == 1 && to_sign.len() == 1;
+    // Finalize iff we signed every input — i.e., the wallet owns all inputs.
+    // Multi-party / partial-ownership PSBTs stay unfinalized so the next
+    // signer can complete them.
+    let can_finalize = signed.len() == inputs_len;
 
     if !can_finalize {
         let updated = psbt.serialize();
@@ -141,24 +145,20 @@ pub fn sign_psbt(xprv: &XPrv, psbt_base64: &str) -> Result<PsbtSignResult, Chain
         });
     }
 
-    // Manual P2WPKH finalization: witness = [sig_der || sighash_byte, compressed_pk].
-    let (sig_pk, sig) = psbt.inputs[0]
-        .partial_sigs
-        .iter()
-        .next()
-        .map(|(k, v)| (*k, *v))
-        .ok_or_else(|| ChainError::SigningFailed("missing_partial_sig".into()))?;
-    debug_assert_eq!(sig_pk, our_pk);
+    // Manual P2WPKH finalization for every signed input:
+    //   witness = [sig_der || sighash_byte, compressed_pk]
+    let compressed_pk = our_pk.to_bytes();
+    for (index, bitcoin_sig) in &signed {
+        let mut witness = Witness::new();
+        witness.push(bitcoin_sig.to_vec());
+        witness.push(&compressed_pk);
 
-    let mut witness = Witness::new();
-    witness.push(sig.to_vec());
-    witness.push(sig_pk.to_bytes());
-
-    psbt.inputs[0].final_script_witness = Some(witness);
-    psbt.inputs[0].partial_sigs.clear();
-    psbt.inputs[0].sighash_type = None;
-    psbt.inputs[0].bip32_derivation.clear();
-    // witness_utxo can be kept; extract_tx_unchecked_fee_rate doesn't care.
+        psbt.inputs[*index].final_script_witness = Some(witness);
+        psbt.inputs[*index].partial_sigs.clear();
+        psbt.inputs[*index].sighash_type = None;
+        psbt.inputs[*index].bip32_derivation.clear();
+        // witness_utxo can be kept; extract_tx_unchecked_fee_rate doesn't care.
+    }
 
     let tx = psbt.extract_tx_unchecked_fee_rate();
 
