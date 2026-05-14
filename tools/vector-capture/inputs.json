@@ -9,8 +9,11 @@
     "simple_transfer":   { "chainId": 1,   "nonce": 0, "to": "0x0000000000000000000000000000000000000000", "value": "1000000000000000000", "gasLimit": 21000,  "maxFeePerGas": "30000000000", "maxPriorityFeePerGas": "2000000000",  "data": "0x" },
     "erc20_transfer":    { "chainId": 1,   "nonce": 7, "to": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", "value": "0",                  "gasLimit": 65000,  "maxFeePerGas": "30000000000", "maxPriorityFeePerGas": "2000000000",  "data": "0xa9059cbb000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa960450000000000000000000000000000000000000000000000000de0b6b3a7640000" },
     "with_access_list":  { "chainId": 1,   "nonce": 1, "to": "0x0000000000000000000000000000000000001234", "value": "0",                  "gasLimit": 100000, "maxFeePerGas": "30000000000", "maxPriorityFeePerGas": "2000000000",  "data": "0x", "accessList": [{ "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", "storageKeys": ["0x0000000000000000000000000000000000000000000000000000000000000000"] }] },
-    "polygon_transfer":  { "chainId": 137, "nonce": 0, "to": "0x0000000000000000000000000000000000000000", "value": "1000000000000000000", "gasLimit": 21000,  "maxFeePerGas": "60000000000", "maxPriorityFeePerGas": "30000000000", "data": "0x" }
+    "polygon_transfer":  { "chainId": 137, "nonce": 0, "to": "0x0000000000000000000000000000000000000000", "value": "1000000000000000000", "gasLimit": 21000,  "maxFeePerGas": "60000000000", "maxPriorityFeePerGas": "30000000000", "data": "0x" },
+    "phase3a_polygon_transfer":  { "chainId": 137,   "nonce": 5, "to": "0x000000000000000000000000000000000000dEaD", "value": "1000000000000000000", "gasLimit": 21000, "maxFeePerGas": "80000000000", "maxPriorityFeePerGas": "50000000000", "data": "0x" },
+    "phase3a_arbitrum_transfer": { "chainId": 42161, "nonce": 3, "to": "0x000000000000000000000000000000000000dEaD", "value": "500000000000000000",  "gasLimit": 21000, "maxFeePerGas": "100000000",   "maxPriorityFeePerGas": "0",           "data": "0x" }
   },
+  "phase3a_address_chains": ["arbitrum", "optimism", "base"],
   "messages": {
     "eip191_hello": "Hello, Jova",
     "eip712_permit": {

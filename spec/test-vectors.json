@@ -1,5 +1,5 @@
 {
-  "version": "0.3",
+  "version": "0.4",
   "vectors": [
     {
       "id": "phase0.mnemonic_validation_neg.gibberish",
@@ -570,6 +570,110 @@
       "source": "BIP-173 example mainnet bech32 P2WPKH address (NOT owned by the abandon-about wallet), supplied to sign_btc_message which compares against derived address and rejects",
       "source_url": "https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki",
       "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "phase3a.address.arbitrum_abandon",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "arbitrum" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — every EVM chain in v1 shares the BIP-44 coin type 60 derivation path; this vector locks JovaChain::Arbitrum routing"
+    },
+
+    {
+      "id": "phase3a.address.optimism_abandon",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "optimism" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — every EVM chain in v1 shares the BIP-44 coin type 60 derivation path; this vector locks JovaChain::Optimism routing"
+    },
+
+    {
+      "id": "phase3a.address.base_abandon",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "base" }
+      },
+      "expected": {
+        "address": "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
+      },
+      "source": "cast wallet derive-private-key + cast wallet address",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "same key at m/44'/60'/0'/0/0 — every EVM chain in v1 shares the BIP-44 coin type 60 derivation path; this vector locks JovaChain::Base routing"
+    },
+
+    {
+      "id": "phase3a.tx.polygon_transfer",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 137,
+          "nonce": 5,
+          "to": "0x000000000000000000000000000000000000dEaD",
+          "value": "1000000000000000000",
+          "gasLimit": 21000,
+          "maxFeePerGas": "80000000000",
+          "maxPriorityFeePerGas": "50000000000",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f875818905850ba43b74008512a05f200082520894000000000000000000000000000000000000dead880de0b6b3a764000080c001a076c0d417290f3d7911efed4c402197fe14dd155b2a92877a907c59c9a5a8d07ba020aa7af11650bec52cd01a53f4bc9de5b5f7b40db8a4a564564d5f2c406290a3",
+        "tx_hash": "0x0c2e43ec1611d39079bac414e55c48286d5afe183cae3c9c2d72e7554b790c33"
+      },
+      "source": "cast mktx",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast mktx --private-key $PRIV --chain 137 --nonce 5 --gas-limit 21000 --gas-price 80000000000 --priority-gas-price 50000000000 --value 1000000000000000000 0x000000000000000000000000000000000000dEaD"
+    },
+
+    {
+      "id": "phase3a.tx.arbitrum_transfer",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 42161,
+          "nonce": 3,
+          "to": "0x000000000000000000000000000000000000dEaD",
+          "value": "500000000000000000",
+          "gasLimit": 21000,
+          "maxFeePerGas": "100000000",
+          "maxPriorityFeePerGas": "0",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f87082a4b103808405f5e10082520894000000000000000000000000000000000000dead8806f05b59d3b2000080c001a0914cbf440e67025fb7e5d97056319d8d4d41d44ceeabfaa8bc1507f9c7d1f9a9a05dc8901d485fec6294e6699647baa77d18e6ba9a3339996e32109db6d26a706c",
+        "tx_hash": "0x4c400107fdaa11c165574f335733514d33c51271c63897becc9d23d11d5644a9"
+      },
+      "source": "cast mktx",
+      "source_url": "cast 1.7.1 (Foundry)",
+      "capture_cmd": "cast mktx --private-key $PRIV --chain 42161 --nonce 3 --gas-limit 21000 --gas-price 100000000 --priority-gas-price 0 --value 500000000000000000 0x000000000000000000000000000000000000dEaD"
     }
   ]
 }

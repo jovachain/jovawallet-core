@@ -69,3 +69,23 @@ EOJSON
 EIP712=$( $CAST wallet sign --private-key "$ABANDON_PRIV" --data --from-file "$PERMIT_TMP")
 rm -f "$PERMIT_TMP"
 echo "signature: $EIP712"
+
+echo ""
+echo "=== Phase 3a address vectors (Arbitrum, Optimism, Base — same key, same address) ==="
+# Every EVM chain in v1 derives from m/44'/60'/0'/0/0, so the address is identical
+# across chains. These vectors lock JovaChain::{Arbitrum,Optimism,Base} routing.
+echo "abandon (arbitrum/optimism/base): $ABANDON_ADDR"
+
+echo ""
+echo "=== Phase 3a Tx: polygon_transfer (chainId=137, nonce=5, to=0xdEaD, value=1eth, gasLimit=21000, maxFee=80gwei, maxPri=50gwei) ==="
+POL3A=$( $CAST mktx --private-key "$ABANDON_PRIV" --chain 137   --nonce 5 --gas-limit 21000 --gas-price 80000000000 --priority-gas-price 50000000000 --value 1000000000000000000 0x000000000000000000000000000000000000dEaD)
+POL3AH=$($CAST keccak "$POL3A")
+echo "signed_hex: $POL3A"
+echo "tx_hash:    $POL3AH"
+
+echo ""
+echo "=== Phase 3a Tx: arbitrum_transfer (chainId=42161, nonce=3, to=0xdEaD, value=0.5eth, gasLimit=21000, maxFee=0.1gwei, maxPri=0) ==="
+ARB3A=$( $CAST mktx --private-key "$ABANDON_PRIV" --chain 42161 --nonce 3 --gas-limit 21000 --gas-price 100000000   --priority-gas-price 0           --value 500000000000000000  0x000000000000000000000000000000000000dEaD)
+ARB3AH=$($CAST keccak "$ARB3A")
+echo "signed_hex: $ARB3A"
+echo "tx_hash:    $ARB3AH"
