@@ -1,5 +1,5 @@
 {
-  "version": "0.2",
+  "version": "0.3",
   "vectors": [
     {
       "id": "phase0.mnemonic_validation_neg.gibberish",
@@ -345,6 +345,231 @@
       },
       "source": "internal — malformed by construction",
       "source_url": "internal"
+    },
+
+    {
+      "id": "btc.address.bip84_abandon_account0_index0",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "bitcoin" }
+      },
+      "expected": {
+        "address": "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
+      },
+      "source": "BIP-84 official test vector (Account 0, External chain, address 0) cross-checked by embit 0.8.0",
+      "source_url": "https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki",
+      "capture_cmd": "tools/btc-vector-capture/single_input.sh derives the same address as a side effect"
+    },
+
+    {
+      "id": "btc.address.bip84_abandon_account0_index1",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "bitcoin" }
+      },
+      "expected": {
+        "address": "bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g"
+      },
+      "source": "BIP-84 official test vector (Account 0, External chain, address 1) cross-checked by embit 0.8.0",
+      "source_url": "https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki",
+      "capture_cmd": "embit: root.derive(\"m/84'/0'/0'/0/1\").key.get_public_key() -> p2wpkh address"
+    },
+
+    {
+      "id": "btc.address.bip84_ozone_account0_index0",
+      "kind": "address",
+      "input": {
+        "mnemonic": "ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic",
+        "passphrase": "",
+        "chain": { "kind": "bitcoin" }
+      },
+      "expected": {
+        "address": "bc1qejl9xacvuwn55857qa8jtm6ettgkla6ps0thaq"
+      },
+      "source": "embit 0.8.0 BIP-84 derivation from the Trezor test mnemonic (replaces a planned account-5 vector — the JovaWallet::address API does not yet accept an account index, so the vector is at account 0)",
+      "source_url": "https://github.com/trezor/python-mnemonic/blob/master/vectors.json",
+      "capture_cmd": "embit: root.derive(\"m/84'/0'/0'/0/0\").key.get_public_key() -> p2wpkh address"
+    },
+
+    {
+      "id": "btc.address.bip84_trezor_account0_index0",
+      "kind": "address",
+      "input": {
+        "mnemonic": "ozone drill grab fiber curtain grace pudding thank cruise elder eight picnic",
+        "passphrase": "",
+        "chain": { "kind": "bitcoin" }
+      },
+      "expected": {
+        "address": "bc1qejl9xacvuwn55857qa8jtm6ettgkla6ps0thaq"
+      },
+      "source": "embit 0.8.0 BIP-84 derivation from the Trezor test mnemonic — duplicate of bip84_ozone_account0_index0 under the alternative naming convention used by the Phase 2 task spec",
+      "source_url": "https://github.com/trezor/python-mnemonic/blob/master/vectors.json",
+      "capture_cmd": "embit: root.derive(\"m/84'/0'/0'/0/0\").key.get_public_key() -> p2wpkh address"
+    },
+
+    {
+      "id": "btc.sign_tx.psbt_single_input",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "bitcoin",
+          "psbt_base64": "cHNidP8BAFICAAAAAaqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqAAAAAAD/////AbiCAQAAAAAAFgAUPjSYXcpv3cn7NplA5MfY4oc/UpwAAAAAAAEBH6CGAQAAAAAAFgAUwM681sPTyox13F7GLr5VMw75EOIiBgMw1U/Q3UIKbl+NNiT180gsrjUPedXwdTv1vu+cLZGvPBhzxdoKVAAAgAAAAIAAAACAAAAAAAAAAAAAAA=="
+        }
+      },
+      "expected": {
+        "signed_hex": "02000000000101aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffff01b8820100000000001600143e34985dca6fddc9fb369940e4c7d8e2873f529c0247304402200c562f638792b429bd1ad99fe0ea5f3f31aea741831f97fd3b324a477f729c03022028152974dcba133177850420d634546cfd8b20f14de0ee4cc8610da90bc8e48801210330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c00000000"
+      },
+      "source": "embit 0.8.0 with low-R-grinded ECDSA (matches Bitcoin Core >= 0.17 default)",
+      "source_url": "tools/btc-vector-capture/single_input.sh",
+      "capture_cmd": "tools/btc-vector-capture/single_input.sh"
+    },
+
+    {
+      "id": "btc.sign_tx.psbt_multi_input_owned",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "bitcoin",
+          "psbt_base64": "cHNidP8BAHsCAAAAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqAAAAAAD/////q6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6sAAAAAAP////8BcAUDAAAAAAAWABQ+NJhdym/dyfs2mUDkx9jihz9SnAAAAAAAAQEfoIYBAAAAAAAWABTAzrzWw9PKjHXcXsYuvlUzDvkQ4iIGAzDVT9DdQgpuX402JPXzSCyuNQ951fB1O/W+75wtka88GHPF2gpUAACAAAAAgAAAAIAAAAAAAAAAAAABAR+ghgEAAAAAABYAFMDOvNbD08qMddxexi6+VTMO+RDiIgYDMNVP0N1CCm5fjTYk9fNILK41D3nV8HU79b7vnC2RrzwYc8XaClQAAIAAAACAAAAAgAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "signed_hex": "02000000000102aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000ffffffffabababababababababababababababababababababababababababababababab0000000000ffffffff0170050300000000001600143e34985dca6fddc9fb369940e4c7d8e2873f529c024730440220626f33c24bf02c7312cbda9ad901f8073f833743e357825d135d165a005c8c9c022027a562e01f9bbc2ffcbd590900dde4da4c05072a7650f66ea286d7abbbdddc1d01210330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c02473044022032ec930f8859fc6c4a934a1607ce352d4651730eb2bd67425b34121400e1755f0220692d6701c4569fdc262f4f68d8d0ac42211a05e48a342ce15b06ab0d86a51a0101210330d54fd0dd420a6e5f8d3624f5f3482cae350f79d5f0753bf5beef9c2d91af3c00000000"
+      },
+      "source": "embit 0.8.0 with low-R-grinded ECDSA (two P2WPKH inputs, both locking to the wallet's m/84'/0'/0'/0/0 address, fully finalized)",
+      "source_url": "tools/btc-vector-capture/multi_input.sh",
+      "capture_cmd": "tools/btc-vector-capture/multi_input.sh"
+    },
+
+    {
+      "id": "btc.sign_tx.psbt_multi_party_partial",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "bitcoin",
+          "psbt_base64": "cHNidP8BAHsCAAAAAszMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMAAAAAAD/////3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0AAAAAAP////8BcAUDAAAAAAAWABQ+NJhdym/dyfs2mUDkx9jihz9SnAAAAAAAAQEfoIYBAAAAAAAWABTAzrzWw9PKjHXcXsYuvlUzDvkQ4iIGAzDVT9DdQgpuX402JPXzSCyuNQ951fB1O/W+75wtka88GHPF2gpUAACAAAAAgAAAAIAAAAAAAAAAAAABAR+ghgEAAAAAABYAFMy+U3cM46dKHp4HTyXvWVrRb/dBIgYCeMXPbo+cOyMVsSOBbkM6qgSDex4PfvsrouE4a7GSEBYYoH1DLFQAAIAAAACAAAAAgAAAAAAAAAAAAAA="
+        }
+      },
+      "expected": {
+        "signed_hex": "psbt:cHNidP8BAHsCAAAAAszMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMAAAAAAD/////3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d0AAAAAAP////8BcAUDAAAAAAAWABQ+NJhdym/dyfs2mUDkx9jihz9SnAAAAAAAAQEfoIYBAAAAAAAWABTAzrzWw9PKjHXcXsYuvlUzDvkQ4iICAzDVT9DdQgpuX402JPXzSCyuNQ951fB1O/W+75wtka88RzBEAiBRADwjs75JDWE/iId2kYPjKW56Qcw8UhYz4CPSut59lwIgKjQVs1r8BlV3hFo2CimQRplgIyaI3wilLB/K7ZODrwoBIgYDMNVP0N1CCm5fjTYk9fNILK41D3nV8HU79b7vnC2RrzwYc8XaClQAAIAAAACAAAAAgAAAAAAAAAAAAAEBH6CGAQAAAAAAFgAUzL5Tdwzjp0oengdPJe9ZWtFv90EiBgJ4xc9uj5w7IxWxI4FuQzqqBIN7Hg9++yui4ThrsZIQFhigfUMsVAAAgAAAAIAAAACAAAAAAAAAAAAAAA=="
+      },
+      "source": "embit 0.8.0: 2-party PSBT (input 0 owned by abandon-about, input 1 owned by ozone-drill); the abandon wallet signs input 0 only and returns the updated (unfinalized) PSBT as \"psbt:<base64>\" per the Task 6 convention",
+      "source_url": "tools/btc-vector-capture/multi_party.sh",
+      "capture_cmd": "tools/btc-vector-capture/multi_party.sh"
+    },
+
+    {
+      "id": "btc.sign_message.bip322_simple",
+      "kind": "sign_message",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "message": {
+          "kind": "bitcoin",
+          "message": "Hello, Jova",
+          "address": "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu",
+          "scheme": "bip322"
+        }
+      },
+      "expected": {
+        "signature_hex": "AkcwRAIgXU7jj/KnFipnPOiGtwBTNLyNeEceuBwD/RgOxpX36dkCIGNAZ1nT/SnxOVxeyFHcWSQOFnrmCq7k5rG8NkXd0/P2ASEDMNVP0N1CCm5fjTYk9fNILK41D3nV8HU79b7vnC2Rrzw="
+      },
+      "source": "embit 0.8.0 BIP-322 simple (low-R-grinded ECDSA), cross-verified by the bip322 PyPI verifier (signature_hex holds a base64 string per the Phase 1 EVM convention of using signature_hex regardless of encoding)",
+      "source_url": "https://github.com/bitcoin/bips/blob/master/bip-0322.mediawiki",
+      "capture_cmd": "tools/btc-vector-capture/messages.sh"
+    },
+
+    {
+      "id": "btc.sign_message.legacy_bitcoin_core",
+      "kind": "sign_message",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "message": {
+          "kind": "bitcoin",
+          "message": "Hello, Jova",
+          "address": "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu",
+          "scheme": "legacy"
+        }
+      },
+      "expected": {
+        "signature_hex": "H6cAEYooO6l0a8bTMrvMbca6Bq0in9zjxMWAz3BgLhMjBrtXw1ONVGnCbIw+7+dYtgIXqc7yNpk76p1bbdnHiaM="
+      },
+      "source": "Bitcoin Core legacy signmessage scheme (sha256d over \"\\x18Bitcoin Signed Message:\\n\" prefix, recoverable ECDSA without low-R grinding, header_byte = recid + 27 + 4 for compressed pubkeys); captured via embit + libsecp256k1",
+      "source_url": "tools/btc-vector-capture/messages.sh",
+      "capture_cmd": "tools/btc-vector-capture/messages.sh"
+    },
+
+    {
+      "id": "btc.error.psbt_invalid_base64",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "bitcoin",
+          "psbt_base64": "not-base64!"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "psbt_invalid_base64"
+      },
+      "source": "Phase 2 error-path definition",
+      "source_url": "spec/errors.md#bitcoin",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "btc.error.psbt_no_signable_inputs",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "bitcoin",
+          "psbt_base64": "cHNidP8BAFICAAAAAe7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7uAAAAAAD/////AbiCAQAAAAAAFgAUyyB1YZ+p9PVmgE5qzjEvgaERXWEAAAAAAAEBH6CGAQAAAAAAFgAUzL5Tdwzjp0oengdPJe9ZWtFv90EiBgJ4xc9uj5w7IxWxI4FuQzqqBIN7Hg9++yui4ThrsZIQFhigfUMsVAAAgAAAAIAAAACAAAAAAAAAAAAAAA=="
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "psbt_no_signable_inputs"
+      },
+      "source": "embit 0.8.0: a valid single-input P2WPKH PSBT whose witness-utxo locks to the ozone-drill wallet (m/84'/0'/0'/0/0) — signing with the abandon-about XPrv finds zero signable inputs",
+      "source_url": "tools/btc-vector-capture/foreign_signer.sh",
+      "capture_cmd": "tools/btc-vector-capture/foreign_signer.sh"
+    },
+
+    {
+      "id": "btc.error.btc_message_address_mismatch",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "message": {
+          "kind": "bitcoin",
+          "message": "Hello, Jova",
+          "address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+          "scheme": "bip322"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedSignableMessage",
+        "reason": "btc_message_address_mismatch"
+      },
+      "source": "BIP-173 example mainnet bech32 P2WPKH address (NOT owned by the abandon-about wallet), supplied to sign_btc_message which compares against derived address and rejects",
+      "source_url": "https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki",
+      "capture_cmd": "n/a"
     }
   ]
 }

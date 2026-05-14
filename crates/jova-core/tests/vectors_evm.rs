@@ -70,6 +70,11 @@ fn evm_sign_tx_vectors() {
         if v["kind"] != "sign_tx" {
             continue;
         }
+        // Phase 2 added BTC sign_tx vectors with `unsigned_tx.kind == "bitcoin"`;
+        // those are exercised by `vectors_btc.rs` in Task 8. Skip them here.
+        if v["input"]["unsigned_tx"]["kind"] != "evm" {
+            continue;
+        }
 
         let id = v["id"].as_str().unwrap_or("?");
         let mnemonic = v["input"]["mnemonic"].as_str().expect("mnemonic exists");
@@ -113,6 +118,11 @@ fn evm_sign_message_vectors() {
         if v["kind"] != "sign_message" {
             continue;
         }
+        // Skip Phase 2 BTC sign_message vectors — they're exercised in `vectors_btc.rs`.
+        let msg_kind = v["input"]["message"]["kind"].as_str().unwrap_or("");
+        if !matches!(msg_kind, "evmPersonalSign" | "evmTypedDataV4") {
+            continue;
+        }
 
         let id = v["id"].as_str().unwrap_or("?");
         let mnemonic = v["input"]["mnemonic"].as_str().expect("mnemonic exists");
@@ -149,6 +159,12 @@ fn evm_error_vectors() {
     let mut ran = 0usize;
     for v in load_vectors() {
         if v["kind"] != "error" {
+            continue;
+        }
+        // Phase 1 error vectors all carry `input.unsigned_tx.kind == "evm"`;
+        // Phase 2 added BTC error vectors (PSBT and signMessage paths). Filter
+        // strictly so only EVM unsigned_tx error vectors land here.
+        if v["input"]["unsigned_tx"]["kind"] != "evm" {
             continue;
         }
 
