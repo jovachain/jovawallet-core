@@ -79,7 +79,11 @@ fn main() -> ExitCode {
         if derived.value == expected_addr {
             matches += 1;
         } else {
-            mismatches.push((mnemonic.to_string(), expected_addr.to_string(), derived.value));
+            mismatches.push((
+                mnemonic.to_string(),
+                expected_addr.to_string(),
+                derived.value,
+            ));
         }
     }
 
@@ -88,11 +92,7 @@ fn main() -> ExitCode {
     if !mismatches.is_empty() {
         for (m, expected, got) in &mismatches {
             // First two words only — the full mnemonic is never logged.
-            let preview: String = m
-                .split_whitespace()
-                .take(2)
-                .collect::<Vec<_>>()
-                .join(" ");
+            let preview: String = m.split_whitespace().take(2).collect::<Vec<_>>().join(" ");
             eprintln!("MISMATCH: '{preview}...' expected={expected} got={got}");
         }
         return ExitCode::FAILURE;
