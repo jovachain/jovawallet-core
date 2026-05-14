@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [Unreleased]
 
+### Added (Phase 7 — hardware-wallet readiness)
+
+- **`JovaRng` trait** in `jova-core-primitives` (gated behind the new `external-rng` feature): firmware integrations provide entropy via `fn fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), RngError>`. `RngError::{Unavailable, HealthCheckFailed}` cover the two failure modes auditors typically check. The trait is `no_std + alloc`-clean.
+- **`Mnemonic::generate_with(strength, &mut impl JovaRng)`** — generate a mnemonic without pulling in `getrandom`. Compatible with `no_std` firmware that uses a hardware TRNG. Zeroizes the entropy buffer on return.
+- **`Seed::from_external_bytes(bytes: [u8; 64])`** — wrap a pre-derived BIP-39 seed from a secure element (`Zeroize + ZeroizeOnDrop` preserved). For firmware that stores the seed in an ATECC608 / OPTIGA Trust M / SE050.
+- **`JovaWallet::from_seed_bytes(bytes: [u8; 64])`** in `jova-core` — bypasses the mnemonic → PBKDF2 step. Rust-only; not exposed via FFI/WASM. Tested byte-equal against `from_mnemonic` for Ethereum + Bitcoin BIP-44 paths.
+- **`examples/firmware-template/`** — working `thumbv7em-none-eabihf` reference binary linking `jova-core-primitives`. BIP-39 → seed → BIP-44 → secp256k1 ECDSA signing in `no_std`. 394 KB stripped ELF. Built in CI on every PR via `.github/workflows/ci-no-std.yml`.
+- **`docs/integration-hardware.md`** — rewritten with Phase 7 API surface: `JovaRng` trait, secure-element-seeded CSPRNG pattern, `Seed::from_external_bytes` / `JovaWallet::from_seed_bytes` usage, side-channel + glitch-protection guidance referencing ATECC608, OPTIGA Trust M, SE050, and the public design docs from Foundation Devices Passport, BitBox02, Trezor Safe 5.
+- **CI extension**: `ci-no-std.yml` now also tests the `external-rng` feature paths, the `from_seed_bytes` constructor, and builds the firmware-template for `thumbv7em-none-eabihf`.
+
+### Notes
+- Phase 7 is preparatory — the SDK is hardware-ready; the firmware repo itself (e.g., `jovachain/jova-firmware-reference`) is separate work. SDK-side scope is complete.
+- `slip-10 0.4` doesn't ship ed25519 support — Solana SLIP-10 was already implemented in-crate during Phase 3c. No additional work needed here.
+- 11 new tests across `external_rng.rs` (5) and `from_seed_bytes.rs` (2) plus firmware-template build smoke.
+
 ### Added (Phase 6 — WASM functional EVM + SOL)
 
 The WASM binding (`crates/jova-core-wasm`) now exposes the full `JovaWallet` signing surface for EVM + SOL chains. **BTC + XRP browser signing is deferred per the 2026-05-11 user decision** — those variants return `unsupportedChain` at the WASM boundary before any chain code executes. Native bindings (Swift, Kotlin) retain full coverage; only WASM is constrained.

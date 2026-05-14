@@ -1,0 +1,40 @@
+[package]
+name = "jova-firmware-template"
+version = "0.0.0"
+edition = "2024"
+publish = false
+description = "Reference Cortex-M no_std firmware integrating jova-core-primitives."
+
+# NOT a workspace member — examples/firmware-template is bare-metal, has its
+# own target triple, and uses cortex-m-rt which won't compile under the
+# workspace's std-by-default settings.
+[workspace]
+
+[[bin]]
+name = "jova-firmware-template"
+path = "src/main.rs"
+test = false
+doc = false
+bench = false
+
+[dependencies]
+jova-core-primitives = { path = "../../crates/jova-core-primitives", default-features = false, features = ["external-rng"] }
+secp256k1 = { version = "0.31", default-features = false, features = ["alloc", "lowmemory"] }
+# `critical-section-single-core` provides the critical_section primitive that
+# embedded-alloc's heap requires. Real multi-core firmware substitutes the
+# platform's CS implementation.
+cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7"
+panic-halt = "0.2"
+# alloc-cortex-m provides a global allocator since jova-core-primitives uses
+# `alloc::*` types (String, Vec) even in no_std. Firmware that wants to avoid
+# any heap should use a static buffer pool instead; this template chooses the
+# simpler path for clarity.
+embedded-alloc = "0.6"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = "z"
+panic = "abort"
+strip = "symbols"
