@@ -16,6 +16,21 @@ crate-type = ["cdylib"]
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
 
+# Feature flags here are documentation of intent: which chains the WASM package
+# considers functional. They do NOT gate compilation — the chains crate is in
+# unconditionally because gating it would mean a much larger refactor across
+# jova-core-chains.  Runtime rejection of Bitcoin / XRP variants happens in
+# src/lib.rs before any chain code executes.  See bindings/wasm/COVERAGE.md.
+[features]
+default = ["chain-evm", "chain-sol"]
+chain-evm = []
+chain-sol = []
+# chain-btc, chain-xrp deliberately omitted from default per the 2026-05-11
+# recorded decision.  The flags remain declared so downstream tooling can read
+# the intent from Cargo metadata.
+chain-btc = []
+chain-xrp = []
+
 [dependencies]
 # jova-core with no `chains` feature: avoids secp256k1-sys (a C crate) which
 # cannot compile for wasm32-unknown-unknown on macOS with Apple clang.
