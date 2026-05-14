@@ -12,6 +12,11 @@ description = "no_std-clean cryptographic primitives for jovawallet-core"
 [features]
 default = ["std"]
 std = ["dep:thiserror", "dep:getrandom"]
+# Phase 7: when enabled, exposes `Mnemonic::generate_with(strength, &mut impl JovaRng)`
+# for firmware that has a hardware TRNG and doesn't want to pull in getrandom (which
+# requires std on most targets). Compatible with `no_std` (alloc-only). The default
+# `Mnemonic::generate()` path stays gated behind `std`.
+external-rng = []
 
 [dependencies]
 zeroize.workspace = true

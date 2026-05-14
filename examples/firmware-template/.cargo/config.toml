@@ -1,0 +1,11 @@
+# Phase 7: firmware-template build settings.
+
+[build]
+target = "thumbv7em-none-eabihf"
+
+[target.thumbv7em-none-eabihf]
+rustflags = [
+    # Embed the linker script defined in memory.x via cortex-m-rt's link.x.
+    "-C", "link-arg=-Tlink.x",
+]
+runner = "echo SKIPPED — no QEMU available; firmware binary is at"

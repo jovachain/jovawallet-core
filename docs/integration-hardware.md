@@ -15,22 +15,113 @@ The shape of the integration is fundamentally different from a phone or backend:
 ```toml
 # firmware/Cargo.toml
 [dependencies]
-jova-core-primitives = { version = "1.0", default-features = false, features = ["alloc"] }
+jova-core-primitives = { version = "1.2", default-features = false, features = ["external-rng"] }
 zeroize = { version = "1", default-features = false }
+secp256k1 = { version = "0.31", default-features = false, features = ["alloc", "lowmemory"] }
 ```
 
-`jova-core-primitives` is `no_std`-clean. `default-features = false` disables anything that pulls in `std`. The `alloc` feature is enabled because `bip39`'s wordlist operations need a heap; firmware uses a `linked_list_allocator` or `embedded-alloc`.
+`jova-core-primitives` is `no_std`-clean. `default-features = false` disables the `std` feature (which would pull in `getrandom`). The `external-rng` feature is the Phase 7 deliverable — it swaps in [`JovaRng`](#jovarng-the-hardware-rng-trait) so firmware supplies entropy from its own hardware TRNG. The crate uses `alloc` transitively because BIP-39 wordlist operations need a heap; firmware uses `embedded-alloc` / `linked_list_allocator` / `talc`.
 
 What you get:
 
-- `Mnemonic::generate(strength)` — generate a fresh mnemonic using firmware-supplied randomness (you provide the RNG).
+- `Mnemonic::generate_with(strength, &mut rng)` — generate a fresh mnemonic using firmware-supplied randomness. **Phase 7 deliverable; requires the `external-rng` feature.**
 - `Mnemonic::validate(words, passphrase)` — checksum + wordlist validation.
-- `Mnemonic::to_seed(passphrase)` — PBKDF2-HMAC-SHA512.
-- `Seed`, `XPrv`, `XPub` — HD types.
-- `derive(seed, path)` — BIP-32 (secp256k1) and SLIP-10 (ed25519).
-- Raw signing primitives: `secp256k1::sign(message_hash, key)`, `ed25519::sign(message, key)`.
-- Hashes: `sha256`, `sha512`, `keccak256`, `ripemd160`.
-- Encoding: `hex`, `base58`, `bech32` (no_std-safe variants).
+- `Mnemonic::to_seed(words, passphrase)` — PBKDF2-HMAC-SHA512.
+- `Seed`, `XPrv`, `Ed25519Xprv` — HD types. `Seed::from_external_bytes(bytes)` constructs from a secure-element-supplied 64-byte BIP-39 seed (Phase 7).
+- `derive_secp256k1(seed, path)` — BIP-32 secp256k1 derivation.
+- `derive_ed25519(seed, path)` — SLIP-10 ed25519 derivation (Solana).
+- `DerivationPath::{bip44_path, bip84_path, parse}` — path constructors.
+
+For raw signing, hashing, and encoding, firmware imports `secp256k1`, `ed25519-dalek`, `sha2`, `sha3`, `ripemd`, `hex`, `bs58`, `bech32` directly with `no_std + alloc` configurations.
+
+## `JovaRng`: the hardware RNG trait (Phase 7)
+
+```rust
+pub trait JovaRng {
+    fn fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), RngError>;
+}
+
+pub enum RngError {
+    /// Source busy / locked — caller may retry.
+    Unavailable,
+    /// Source self-detected as broken (e.g. NIST SP 800-90B health check failed).
+    HealthCheckFailed,
+}
+```
+
+The implementation is responsible for cryptographic quality — `jova-core-primitives` consumes the bytes without post-processing.
+
+### Reference patterns
+
+**STM32 TRNG (stm32f4xx-hal):**
+```rust
+use stm32f4xx_hal::rng::Rng as HalRng;
+use jova_core_primitives::{JovaRng, RngError};
+
+struct StmTrng<'a>(&'a mut HalRng);
+impl<'a> JovaRng for StmTrng<'a> {
+    fn fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), RngError> {
+        self.0.read(dest).map_err(|_| RngError::Unavailable)
+    }
+}
+```
+
+**nRF52840 RNG (nrf52840-hal):** similar shape via `nrf52840_hal::rng::Rng`.
+
+**Secure-element-seeded CSPRNG (no on-chip TRNG):** draw a 32-byte seed from the secure element (ATECC608 `Random` command, OPTIGA Trust M `GetRandom`), feed to `rand_chacha::ChaCha20Rng`, wrap in `JovaRng`. Document the entropy chain — auditors check this.
+
+## Bypassing the mnemonic step
+
+When the firmware has the seed in a secure element (typical for production — the user enters their mnemonic on first setup and the device stores the derived seed, never the words), wrap it via `Seed::from_external_bytes`:
+
+```rust
+use jova_core_primitives::{Seed, derive_secp256k1, DerivationPath};
+
+let seed_bytes: [u8; 64] = secure_element_read_seed();
+let seed = Seed::from_external_bytes(seed_bytes);  // Zeroize on drop
+let path = DerivationPath::parse("m/44'/60'/0'/0/0").unwrap();
+let xprv = derive_secp256k1(&seed, &path).unwrap();
+```
+
+For host-side (non-bare-metal) consumers that want the full `JovaWallet` API, `jova-core` ships `JovaWallet::from_seed_bytes(bytes)` behind the same `external-rng` feature. **Rust-only — not exposed via FFI/WASM.**
+
+## Reference firmware template
+
+[`examples/firmware-template/`](../examples/firmware-template/) is a working `thumbv7em-none-eabihf` binary linking `jova-core-primitives` and signing a synthetic EVM digest. Builds in CI; no real hardware needed. Demonstrates:
+
+- Heap setup via `embedded-alloc` (16 KiB static buffer).
+- BIP-39 mnemonic → seed → BIP-44 derivation in `no_std`.
+- secp256k1 ECDSA signing on Cortex-M with the `lowmemory` feature.
+- ~394 KB stripped ELF — fits any STM32F4 / nRF52840 / SAMD51 flash.
+
+The template hardcodes the BIP-39 test mnemonic for hermetic CI; production firmware substitutes `Mnemonic::generate_with` against the platform's TRNG.
+
+## Side-channel and glitch protection
+
+Generic guidance — consult your secure element vendor's white papers for platform-specific recommendations:
+
+**Secure-element-backed key custody:**
+- **ATECC608** (Microchip): I2C/SWI, slot-based key storage with HMAC authentication. Use for the seed; the SDK never sees the raw key.
+- **OPTIGA Trust M** (Infineon): I2C, ECC P-256 native + RSA-2048. Slower but more flexible.
+- **SE050** (NXP): broader algorithm set including secp256k1 native; can perform the full signing operation on the secure element.
+
+**Glitch-detection patterns:**
+- Voltage monitoring via on-chip ADC (rail droop indicates a power-glitch attempt).
+- Clock-frequency self-check before each crypto operation.
+- Recompute critical decisions twice with different timing and assert agreement.
+- TXM/RXM cross-check for I2C/SPI commands to the secure element.
+
+**User-confirmation UI:**
+- Display transaction details (chain, to-address, amount, fee) on the device's own screen, not the phone's.
+- Require explicit button press to confirm. Cancellation aborts; do not auto-time-out into approval.
+- Display the address in a checksummed form (EIP-55 for EVM, bech32 for BTC) and have the user verify the first/last 4 characters against the phone display.
+
+Reference platforms with public design documents:
+- **Foundation Devices Passport** — STM32H7, dual-secure-element architecture.
+- **BitBox02** — ATSAMD51 + ATECC608.
+- **Trezor Safe 5** — STM32U5, on-chip secure storage.
+
+This guide is **starting points, not exhaustive**; certification (FIPS 140-3, CC EAL5+) is a 6+ month process with its own budget.
 
 What you don't get (and what to do instead):
 

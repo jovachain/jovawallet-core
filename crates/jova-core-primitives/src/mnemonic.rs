@@ -40,6 +40,38 @@ impl Mnemonic {
         }
     }
 
+    /// Generate a mnemonic using an externally-supplied RNG.
+    ///
+    /// Use this from firmware that has its own hardware TRNG and doesn't want
+    /// to pull in `getrandom` (which requires `std` on most embedded targets).
+    /// The caller's `JovaRng` implementation is responsible for cryptographic
+    /// quality — this function only feeds the bytes through BIP-39.
+    ///
+    /// Available when the `external-rng` feature is enabled. Compatible with
+    /// `no_std + alloc`.
+    #[cfg(feature = "external-rng")]
+    pub fn generate_with<R: crate::JovaRng>(
+        strength: Strength,
+        rng: &mut R,
+    ) -> Result<Self, crate::RngError> {
+        let entropy_bytes = match strength {
+            Strength::Bits128 => 16, // 128 bits → 12 words
+            Strength::Bits256 => 32, // 256 bits → 24 words
+        };
+        let mut entropy = [0u8; 32];
+        rng.fill_bytes(&mut entropy[..entropy_bytes])?;
+        let m = Bip39Mnemonic::from_entropy(&entropy[..entropy_bytes])
+            .expect("entropy length is valid (16 or 32)");
+        // Zeroize the stack buffer before returning.
+        let words = m.to_string();
+        let result = Self {
+            words,
+            passphrase: String::new(),
+        };
+        entropy.zeroize();
+        Ok(result)
+    }
+
     pub fn validate(words: &str, _passphrase: &str) -> Result<(), MnemonicError> {
         // `parse()` is available because bip39's `alloc` feature enables `unicode-normalization`.
         match Bip39Mnemonic::parse(words) {

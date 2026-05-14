@@ -29,4 +29,24 @@ jobs:
       # validates that jova-core-primitives compiles without the standard library.
       # (Task 3 finding: the crate's default feature is "std"; without this flag
       # the build silently enables std and the no_std guarantee is not tested.)
-      - run: cargo build -p jova-core-primitives --target thumbv7em-none-eabihf --no-default-features
+      - name: Build no_std baseline
+        run: cargo build -p jova-core-primitives --target thumbv7em-none-eabihf --no-default-features
+
+      # Phase 7: validate the firmware target config that hardware integrations use.
+      # `external-rng` activates Mnemonic::generate_with(&mut impl JovaRng) for
+      # consumers that drive their own hardware TRNG instead of getrandom.
+      - name: Build no_std + external-rng (firmware config)
+        run: cargo build -p jova-core-primitives --target thumbv7em-none-eabihf --no-default-features --features external-rng
+
+      # Native test of the external-rng path so test failures land in CI even
+      # though the embedded-target tests aren't run on bare metal.
+      - name: Test external-rng feature paths
+        run: cargo test -p jova-core-primitives --features external-rng --test external_rng
+
+      - name: Test JovaWallet::from_seed_bytes
+        run: cargo test -p jova-core --features external-rng --test from_seed_bytes
+
+      # Phase 7: build the firmware-template example for the embedded target.
+      # Smoke-tests that the example's dependency chain stays no_std-clean.
+      - name: Build firmware-template example
+        run: cargo build --manifest-path examples/firmware-template/Cargo.toml --target thumbv7em-none-eabihf --release

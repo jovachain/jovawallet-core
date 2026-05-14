@@ -20,6 +20,22 @@ impl JovaWallet {
         Ok(Self { seed })
     }
 
+    /// Create a wallet directly from a 64-byte BIP-39 seed.
+    ///
+    /// **Hardware-wallet integrations only.** This bypasses the mnemonic →
+    /// seed PBKDF2 step. Use it from firmware that has already derived the
+    /// seed in a secure element and only needs the signing surface.
+    ///
+    /// Not exposed via FFI/WASM — the FFI/WASM API stays at `from_mnemonic`.
+    ///
+    /// Available when the `external-rng` feature is enabled.
+    #[cfg(feature = "external-rng")]
+    pub fn from_seed_bytes(bytes: [u8; 64]) -> Self {
+        Self {
+            seed: Seed::from_external_bytes(bytes),
+        }
+    }
+
     /// Derive the canonical address for the given chain.
     ///
     /// `_account` is reserved for future multi-account support;
