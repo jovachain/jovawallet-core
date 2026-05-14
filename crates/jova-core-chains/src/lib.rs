@@ -4,6 +4,7 @@
 
 pub mod btc;
 pub mod evm;
+pub mod xrp;
 
 mod address;
 mod error;

@@ -22,3 +22,12 @@ thiserror.workspace = true
 # Bitcoin support (Phase 2): rust-bitcoin for BIP-84 address encoding.
 # bdk_wallet is added in the PSBT-signing task.
 bitcoin = { workspace = true, features = ["std"] }
+# XRP support (Phase 3b): xrpl-rust 1.1. Crate name on crates.io is `xrpl-rust`;
+# the Rust module is `xrpl`. We use only the address codec + binary codec —
+# never the network client. Inherit workspace features so binarycodec functions
+# are visible.
+xrpl-rust = { workspace = true }
+# XRPL address hashing: SHA256 (already pulled via sha2 from primitives) +
+# RIPEMD-160. SHA512 needed for canonical signing prefix half-hash.
+sha2.workspace = true
+ripemd.workspace = true
