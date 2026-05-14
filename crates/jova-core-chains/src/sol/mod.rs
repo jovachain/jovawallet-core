@@ -22,3 +22,74 @@ pub mod tx;
 pub use address::{derive_sol_address, validate_sol_address};
 pub use message::sign_sol_message;
 pub use tx::sign_sol_tx;
+
+use jova_core_primitives::Ed25519Xprv;
+
+use crate::address::{Address, Signature, SignedTx};
+use crate::error::ChainError;
+use crate::signable_message::SignableMessage;
+use crate::unsigned_tx::UnsignedTx;
+
+/// Solana signing facade.
+///
+/// **Not a `ChainSigner` implementation** — `ChainSigner` is locked to the
+/// secp256k1 `XPrv` key type, and Solana uses an ed25519 leaf key
+/// (`Ed25519Xprv`). `SolSigner`'s methods take `&Ed25519Xprv` directly;
+/// `JovaWallet` special-cases dispatch for Solana, deriving via
+/// `derive_ed25519` and calling these methods without going through the
+/// trait. This is intentional: the alternatives — genericizing the trait
+/// over the key type, or type-erasing the key to `&[u8; 32]` — were both
+/// judged more invasive than this surgical routing.
+pub struct SolSigner;
+
+impl SolSigner {
+    pub fn derive_address(&self, key: &Ed25519Xprv) -> Result<Address, ChainError> {
+        Ok(Address {
+            chain: "solana".to_string(),
+            value: derive_sol_address(key)?,
+        })
+    }
+
+    pub fn validate_address(&self, addr: &str) -> bool {
+        validate_sol_address(addr)
+    }
+
+    pub fn sign_tx(
+        &self,
+        key: &Ed25519Xprv,
+        unsigned: &UnsignedTx,
+    ) -> Result<SignedTx, ChainError> {
+        match unsigned {
+            UnsignedTx::Solana {
+                message_base64,
+                recent_blockhash,
+            } => {
+                let (raw_hex, tx_hash) = sign_sol_tx(key, message_base64, recent_blockhash)?;
+                Ok(SignedTx {
+                    chain: "solana".to_string(),
+                    raw_hex,
+                    tx_hash,
+                })
+            }
+            _ => Err(ChainError::MalformedUnsignedTx(
+                "expected_solana_variant".into(),
+            )),
+        }
+    }
+
+    pub fn sign_message(
+        &self,
+        key: &Ed25519Xprv,
+        msg: &SignableMessage,
+    ) -> Result<Signature, ChainError> {
+        match msg {
+            SignableMessage::Solana { message_base64 } => {
+                let sig_b58 = sign_sol_message(key, message_base64)?;
+                Ok(Signature { hex: sig_b58 })
+            }
+            _ => Err(ChainError::MalformedSignableMessage(
+                "expected_solana_message".into(),
+            )),
+        }
+    }
+}

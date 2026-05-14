@@ -13,7 +13,16 @@ pub enum UnsignedTx {
     Xrp {
         tx_json: String,
     },
-    // Phase 3c adds: Solana.
+    /// Solana VersionedTransaction (v0 or legacy): `message_base64` is the
+    /// wire-form bincode-serialized `VersionedMessage` (v0 messages start
+    /// with the 0x80 version-marker byte; legacy messages start with the
+    /// number-of-signatures byte). `recent_blockhash` is the base58 form of
+    /// the blockhash embedded in the message; the signer enforces a
+    /// byte-equality check against the parsed message blockhash.
+    Solana {
+        message_base64: String,
+        recent_blockhash: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

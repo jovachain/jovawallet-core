@@ -19,5 +19,6 @@ pub use error::ChainError;
 pub use evm::EvmSigner;
 pub use signable_message::SignableMessage;
 pub use signer::ChainSigner;
+pub use sol::SolSigner;
 pub use unsigned_tx::{AccessListItem, EvmUnsigned, UnsignedTx};
 pub use xrp::XrpSigner;
