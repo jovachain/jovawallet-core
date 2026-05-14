@@ -31,3 +31,19 @@ xrpl-rust = { workspace = true }
 # RIPEMD-160. SHA512 needed for canonical signing prefix half-hash.
 sha2.workspace = true
 ripemd.workspace = true
+# Solana support (Phase 3c): Anza split crates. Only `solana-pubkey` is
+# strictly required for address derivation; the rest are added as the tx
+# signing and message signing tasks land.
+solana-pubkey = { workspace = true }
+solana-keypair = { workspace = true }
+solana-signature = { workspace = true }
+solana-message = { workspace = true }
+solana-transaction = { workspace = true }
+ed25519-dalek.workspace = true
+# bs58 (base58 alphabet) for Solana signature/hash encoding. Solana uses the
+# Bitcoin base58 alphabet — same as `bs58 0.5` (workspace dep was Phase 2's
+# default).
+bs58 = "0.5"
+# bincode for serializing VersionedTransaction; Solana split crates pin to
+# 1.3.x (pre-2.x migration), so we match that here.
+bincode = "1.3"
