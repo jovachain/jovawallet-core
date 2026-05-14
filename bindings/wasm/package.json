@@ -32,7 +32,8 @@
   ],
   "scripts": {
     "build": "./scripts/build-wasm.sh",
-    "test": "vitest run"
+    "test": "vitest run",
+    "size-check": "node scripts/size-check.mjs"
   },
   "devDependencies": {
     "vitest": "^4.1.0",

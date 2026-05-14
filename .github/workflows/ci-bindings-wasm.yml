@@ -49,3 +49,6 @@ jobs:
       # (asserts BTC + XRP are rejected at the WASM boundary per the
       # 2026-05-11 user decision).  See bindings/wasm/COVERAGE.md.
       - run: cd bindings/wasm && pnpm install && pnpm test
+
+      # Bundle-size budget check: gzipped .wasm <= 2 MB, raw JS shim <= 200 KB.
+      - run: cd bindings/wasm && pnpm run size-check
