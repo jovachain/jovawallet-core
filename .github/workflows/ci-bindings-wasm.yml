@@ -38,7 +38,14 @@ jobs:
       # Build WASM with --target nodejs (spike finding: file:// fetch is not
       # supported by Node's undici; nodejs target uses fs.readFileSync instead).
       # wasm-opt = false is already set in crates/jova-core-wasm/Cargo.toml, so no
-      # override is needed here.
+      # override is needed here.  Phase 6 enabled jova-core's `chains` feature
+      # in the WASM crate, so this build also exercises the full secp256k1 +
+      # alloy + Solana dep tree against wasm32-unknown-unknown.
       - run: ./bindings/wasm/scripts/build-wasm.sh
 
+      # Phase 6: pnpm test runs hello.test.ts (smoke), evm-vectors.test.ts,
+      # sol-vectors.test.ts (full byte-equal parity with the Rust core's
+      # vector tests for both chain families), plus unsupported-chains.test.ts
+      # (asserts BTC + XRP are rejected at the WASM boundary per the
+      # 2026-05-11 user decision).  See bindings/wasm/COVERAGE.md.
       - run: cd bindings/wasm && pnpm install && pnpm test
