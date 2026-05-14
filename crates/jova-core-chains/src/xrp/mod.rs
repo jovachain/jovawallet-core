@@ -5,5 +5,7 @@
 //! (no canonical scheme exists in the protocol).
 
 pub mod address;
+pub mod tx;
 
 pub use address::{derive_xrp_address, validate_xrp_address};
+pub use tx::sign_xrp_tx;
