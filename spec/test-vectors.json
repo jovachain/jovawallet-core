@@ -1,5 +1,5 @@
 {
-  "version": "0.4",
+  "version": "0.5",
   "vectors": [
     {
       "id": "phase0.mnemonic_validation_neg.gibberish",
@@ -674,6 +674,122 @@
       "source": "cast mktx",
       "source_url": "cast 1.7.1 (Foundry)",
       "capture_cmd": "cast mktx --private-key $PRIV --chain 42161 --nonce 3 --gas-limit 21000 --gas-price 100000000 --priority-gas-price 0 --value 500000000000000000 0x000000000000000000000000000000000000dEaD"
+    },
+
+    {
+      "id": "xrp.address.abandon_account0",
+      "kind": "address",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "chain": { "kind": "xrp" }
+      },
+      "expected": {
+        "address": "rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3"
+      },
+      "source": "bip_utils 2.x BIP-44 derivation at m/44'/144'/0'/0/0 -> XRPL classic address (SHA256 -> RIPEMD160 -> XRPL base58check)",
+      "source_url": "tools/xrp-vector-capture/captures/abandon_account0.address",
+      "capture_cmd": "tools/xrp-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "xrp.sign_tx.payment_with_dt",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "{\"TransactionType\":\"Payment\",\"Account\":\"rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3\",\"Destination\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"DestinationTag\":12345,\"Amount\":\"1000000\",\"Fee\":\"12\",\"Sequence\":1,\"Flags\":0}"
+        }
+      },
+      "expected": {
+        "signed_hex": "120000220000000024000000012E000030396140000000000F424068400000000000000C7321031D68BC1A142E6766B2BDFB006CCFE135EF2E0E2E94ABB5CF5C9AB6104776FBAE7446304402201D48F70BDAB0B171596918ED373907A3503454078C83550354EE436A561071E402203D8D24B3A0517B8163696855823CC0FFFA29FA78022B76D54B83276184CF4A758114AFF3C2E33458B30714CA16FFEE19952DD35C17C88314F667B0CA50CC7709A220B0561B85E53A48461FA8",
+        "tx_hash": "D56E418F77EC187B70BC32EB32BE7078F84300E3E28E45008A31A98445F3FB31"
+      },
+      "source": "xrpl-py 4.5 + bip_utils 2.x (BIP-44 coin type 144); canonical XRPL binary serialization with RFC-6979 + DER + SHA512Half",
+      "source_url": "tools/xrp-vector-capture/captures/payment_dt.signed.json",
+      "capture_cmd": "tools/xrp-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "xrp.sign_tx.offer_create",
+      "kind": "sign_tx",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "{\"TransactionType\":\"OfferCreate\",\"Account\":\"rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3\",\"TakerGets\":\"10000000\",\"TakerPays\":{\"currency\":\"USD\",\"issuer\":\"rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe\",\"value\":\"1.5\"},\"Fee\":\"12\",\"Sequence\":2,\"Flags\":0}"
+        }
+      },
+      "expected": {
+        "signed_hex": "1200072200000000240000000264D485543DF729C0000000000000000000000000005553440000000000F667B0CA50CC7709A220B0561B85E53A48461FA865400000000098968068400000000000000C7321031D68BC1A142E6766B2BDFB006CCFE135EF2E0E2E94ABB5CF5C9AB6104776FBAE74473045022100CAB95E0695664C92188DD9E9195ACB02DFAE6B7D6F1BA781A63C19DF3ABA45DC022053663BCF5075ECEE83A86AA1B527A997F347B4B7C6BC70AA97AF0DF9E034CFE18114AFF3C2E33458B30714CA16FFEE19952DD35C17C8",
+        "tx_hash": "D88435A7BE3052CFC1B060362F383CF44F7C885411582F1B74DD975E2808F70D"
+      },
+      "source": "xrpl-py 4.5 + bip_utils 2.x (BIP-44 coin type 144); canonical XRPL binary serialization with RFC-6979 + DER + SHA512Half; issued-currency amount uses XRPL 64-bit float encoding",
+      "source_url": "tools/xrp-vector-capture/captures/offer_create.signed.json",
+      "capture_cmd": "tools/xrp-vector-capture/capture-tx.sh"
+    },
+
+    {
+      "id": "xrp.error.invalid_json",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "not-json"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "xrp_invalid_json"
+      },
+      "source": "Phase 3 error-path definition",
+      "source_url": "spec/errors.md#phase-3--xrp-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "xrp.error.missing_transaction_type",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "{\"Account\":\"rHsMGQEkVNJmpGWs8XUBoTBiAAbwxZN5v3\"}"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "xrp_missing_required_field:TransactionType"
+      },
+      "source": "Phase 3 error-path definition",
+      "source_url": "spec/errors.md#phase-3--xrp-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "xrp.error.missing_account",
+      "kind": "error",
+      "input": {
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "unsigned_tx": {
+          "kind": "xrp",
+          "tx_json": "{\"TransactionType\":\"Payment\"}"
+        }
+      },
+      "expected": {
+        "error_variant": "MalformedUnsignedTx",
+        "reason": "xrp_missing_required_field:Account"
+      },
+      "source": "Phase 3 error-path definition; exercises the second iteration of the required-field check in sign_xrp_tx so a separate distinct reason value is emitted from xrp.error.missing_transaction_type",
+      "source_url": "spec/errors.md#phase-3--xrp-malformed_unsigned_tx-reasons",
+      "capture_cmd": "n/a"
     }
   ]
 }
