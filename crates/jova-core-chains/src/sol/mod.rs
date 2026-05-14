@@ -16,7 +16,9 @@
 //! `&[u8; 32]` was deemed more invasive than this special-case routing).
 
 pub mod address;
+pub mod message;
 pub mod tx;
 
 pub use address::{derive_sol_address, validate_sol_address};
+pub use message::sign_sol_message;
 pub use tx::sign_sol_tx;
