@@ -5,6 +5,8 @@ enum VectorDecodeError: Error {
     case unknownChainKind(String)
     case missingField(String)
     case unknownMessageKind(String)
+    case unknownUnsignedTxKind(String)
+    case unknownBtcMsgScheme(String)
 }
 
 func decodeChain(_ dict: [String: Any]) throws -> JovaChain {
@@ -67,6 +69,35 @@ func decodeEvmUnsigned(_ dict: [String: Any]) throws -> EvmUnsigned {
     )
 }
 
+/// Decode an `input.unsigned_tx` dict into the uniffi `UnsignedTx` enum.
+/// Supports `"evm"` and `"bitcoin"` kinds; later phases extend this switch.
+func decodeUnsignedTx(_ dict: [String: Any]) throws -> UnsignedTx {
+    guard let kind = dict["kind"] as? String else {
+        throw VectorDecodeError.missingField("kind")
+    }
+    switch kind {
+    case "evm":
+        let evm = try decodeEvmUnsigned(dict)
+        return .evm(tx: evm)
+    case "bitcoin":
+        guard let psbt = dict["psbt_base64"] as? String else {
+            throw VectorDecodeError.missingField("psbt_base64")
+        }
+        return .bitcoin(psbtBase64: psbt)
+    default:
+        throw VectorDecodeError.unknownUnsignedTxKind(kind)
+    }
+}
+
+/// Map the spec's camelCase `scheme` field to the uniffi `BtcMsgScheme` enum.
+private func decodeBtcMsgScheme(_ s: String) throws -> BtcMsgScheme {
+    switch s {
+    case "bip322": return .bip322
+    case "legacy": return .legacy
+    default:       throw VectorDecodeError.unknownBtcMsgScheme(s)
+    }
+}
+
 func decodeSignableMessage(_ dict: [String: Any]) throws -> SignableMessage {
     guard let kind = dict["kind"] as? String else {
         throw VectorDecodeError.missingField("kind")
@@ -82,6 +113,18 @@ func decodeSignableMessage(_ dict: [String: Any]) throws -> SignableMessage {
             throw VectorDecodeError.missingField("json")
         }
         return .evmTypedDataV4(json: json)
+    case "bitcoin":
+        guard let msg = dict["message"] as? String else {
+            throw VectorDecodeError.missingField("message")
+        }
+        guard let addr = dict["address"] as? String else {
+            throw VectorDecodeError.missingField("address")
+        }
+        guard let schemeStr = dict["scheme"] as? String else {
+            throw VectorDecodeError.missingField("scheme")
+        }
+        let scheme = try decodeBtcMsgScheme(schemeStr)
+        return .bitcoin(message: msg, address: addr, scheme: scheme)
     default:
         throw VectorDecodeError.unknownMessageKind(kind)
     }
