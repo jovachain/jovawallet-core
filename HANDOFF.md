@@ -1,12 +1,12 @@
 # HANDOFF — autonomous session (2026-05-14)
 
-This file is the post-execution summary for whoever picks up after this Linux VM session. **Read this AND `AGENT-README.md` AND `CLAUDE.md` before doing anything else.**
+This file is the post-execution summary for whoever picks up next. **Read this AND `AGENT-README.md` AND `CLAUDE.md` before doing anything else.**
 
 ## Where we are right now
 
-- **Branch:** `feat/phase-2-bitcoin` (pushed to origin)
-- **Phase 2 status:** Tasks 1 + 2 of 12 done. Repo builds clean. Tests pass.
-- **PR status:** No PR opened. Open one after Tasks 6, 7, 8, 9 are also done. Tasks 10 and 11 are external blockers — see "Hard blockers" below.
+- **Branch:** `feat/phase-2-bitcoin` (pushed, ready for PR).
+- **Phase 2 status:** Tasks 1-9 complete. Tasks 10-11 are external blockers tracked as GitHub issues #3 and #4. Task 12 (pre-PR gauntlet + open PR + merge + tag `v0.2.0`) is the next step.
+- **PR status:** No PR opened yet. Open after the local pre-PR gauntlet passes.
 - **Tag status:** Unchanged. `v0.0.1`, `v0.1.0` on `main`. No new tags.
 
 ## Commits on `feat/phase-2-bitcoin`
@@ -16,87 +16,54 @@ This file is the post-execution summary for whoever picks up after this Linux VM
 | `6d764a2` | feat(primitives): BIP-84 derivation path helper + BIP-84 official vectors |
 | `63e5097` | feat(chains/btc): P2WPKH address derivation + bech32 validation |
 | `fd071f8` | docs: backfill CHANGELOG entries for v0.0.1 + v0.1.0; add HANDOFF.md |
+| `a8b7355` | docs: update HANDOFF with bitcoin 0.32 API gotchas and revert note |
+| `233409b` | feat(chains/btc): single-input PSBT signing |
+| `895918e` | refactor(chains/btc): tighten PSBT signing per code review |
+| `46d0d52` | feat(chains/btc): multi-input + multi-party PSBT signing |
+| `c98fc6b` | feat(chains/btc): BIP-322 + legacy signMessage |
+| `8c29451` | feat(core): JovaWallet dispatch to BtcSigner via JovaChain::Bitcoin |
+| `b27aeef` | feat(spec): 12 BTC vectors covering BIP-84, PSBT, BIP-322, error paths |
+| `acba201` | test: BTC vector parity on Rust + Kotlin (+ Swift CI-only) |
+| `8487fae` | test(btc): property tests + 3 fuzz targets |
 
-`cargo build --workspace` finishes in ~38 s incremental on this VM after the bitcoin crate is compiled once (cold compile of the bitcoin dep tree is ~15 min).
+## Decisions made autonomously this session (Phase 2)
 
-## Decisions made autonomously this session
+1. **Capture path:** all BTC vector captures use `embit 0.8.0` Python as the independent reference signer (RFC-6979 deterministic ECDSA + low-R grinding, matching Bitcoin Core ≥ v0.17 defaults). Bitcoind regtest + bdk-cli (the plan's path A) was rejected because `bitcoind` is not in Ubuntu 24.04 apt repos and bdk-cli 3.0 requires a configured backend. The captures are reproducible: capture scripts live in `tools/btc-vector-capture/*.sh`. BIP-322 cross-validated by the `bip322` PyPI package.
+2. **bdk_wallet not pulled.** Manual P2WPKH PSBT finalization in pure `bitcoin 0.32` (witness `[sig_der || sighash_byte, compressed_pubkey]`). Avoids 15+ min cold compile of bdk_wallet's dep tree.
+3. **Low-R grinding on PSBT signing** (`secp.sign_ecdsa_low_r`, not `sign_ecdsa`). The Task 3 single-input test had been passing by coincidence (its sighash happened to be low-R unconditionally); the multi-input vector capture exposed the divergence. Bitcoin Core has grinded for low-R by default since v0.17 (2018) — matching is correct product behavior. Saves ~0.5 sat/byte on every SegWit-spending tx.
+4. **Multi-party PSBT signaling convention:** `SignedTx.raw_hex` is prefixed with `psbt:` when the wallet returns an unfinalized PSBT (i.e., needs another signer). Apps inspect the prefix to decide broadcast vs. hand-off. `tx_hash` is empty for multi-party. Documented in `crates/jova-core-chains/src/btc/mod.rs::BtcSigner::sign_tx`.
+5. **BIP-322 implemented in-tree** against `bitcoin 0.32` primitives (tagged hash + virtual to_spend/to_sign txs + BIP-143 sighash + low-R ECDSA + witness consensus base64). No external `bip322` Rust crate pulled in. Output format: bare base64 of the witness (no `smp` BIP-322 prefix variant — that's only for verifier-disambiguation; mainstream signers like Sparrow / Unisat / ord / Leather / bdk all produce/accept the bare form).
+6. **Legacy signMessage**: classic Bitcoin Core `signmessage` scheme — `"\x18Bitcoin Signed Message:\n<varint><msg>"` digest, `sign_ecdsa_recoverable` (no low-R grinding, matching Bitcoin Core's recoverable path), 65-byte `[header || r || s]` blob, base64-encoded. Header byte = `recovery_id + 31` for compressed keys.
+7. **`JovaChain::Bitcoin` API gap:** `JovaWallet::address(chain, _account)` currently ignores its `account` argument. The vector `btc.address.bip84_abandon_account0_index1` exists in the spec (recording the BIP-84 official second-address vector) but is filtered out by `vectors_btc.rs::btc_address_vectors` until the API grows an index argument (Phase 3+).
+8. **`tools/btc-migration-check`** scaffolded but gated on the CSV. Build succeeds; running with no CSV exits 2 with a helpful error. Will run end-to-end the moment the Android team drops `known-android-mappings.csv` into the directory. CSV is gitignored.
+9. **No AI attribution anywhere** in commits, source comments, or docs. Repo policy enforced.
 
-1. **Git identity** set to `xhuman <xhuman.77x@gmail.com>` per user instruction. Replaces `jovachain-agent <agent@jovachain.local>` going forward; Phase 0/1 history is untouched.
-2. **`gh` CLI** authenticated with a fine-grained PAT scoped to the `jovachain` GH account. Token was provided in-session. Re-auth with a fresh token if needed.
-3. **CHANGELOG.md** backfilled with real `[0.0.1]` (2026-05-12) and `[0.1.0]` (2026-05-13) entries plus a working `[Unreleased]` section for Phase 2. Was a flagged "small debt" in the handoff — now current.
-4. **`bitcoin` 0.32** added to `jova-core-chains` workspace dep inheritance with `features = ["std"]`. The workspace `bitcoin` dep is declared with `default-features = false, features = ["secp-recovery"]`; crate-local `std` is required because chains is a std crate. `bdk_wallet` is **not** added yet — defer until the PSBT-signing task actually uses it.
-5. **No autonomous architectural deviations.** All commits follow the locked conventions: `#![forbid(unsafe_code)]`, no_std-clean primitives, engine confinement (`bitcoin` only inside `jova-core-chains`), Conventional Commits, no AI attribution anywhere.
+## VM environment (still as of 2026-05-14)
 
-## VM environment (as of 2026-05-14)
-
-- Ubuntu 24.04, **1 vCPU, 2 GB RAM + 4 GB swap.** Cold workspace compile of new crate deps = **~15 min**. Plan TDD cycles accordingly.
-- All required cargo tools installed: `just`, `cargo-ndk`, `cargo-deny`, `cargo-audit`, `cargo-fuzz`, `uniffi-bindgen`, `wasm-pack`, `bdk-cli`.
-- External reference signers installed: Foundry (`cast`, `forge`, `anvil`), Solana CLI (Anza). `xrpl-py` was pre-installed via `pipx`.
+- Ubuntu 24.04, **1 vCPU, 2 GB RAM + 4 GB swap.** Cold workspace compile = 38 s incremental, 15 min from scratch. Kotlin AAR cross-compile to 4 Android targets is 20-30 min.
+- All required cargo tools installed: `just`, `cargo-ndk`, `cargo-deny`, `cargo-audit`, `cargo-fuzz`, `uniffi-bindgen`, `wasm-pack`, `bdk-cli 3.0`.
+- External reference signers installed: Foundry (`cast`, `forge`, `anvil`), Solana CLI (Anza), `xrpl-py` (pipx). Python 3 + `embit 0.8.0` + `bip322` available in disposable venvs per capture script.
 - Rust toolchain: 1.95.0 stable + nightly. All 10 cross-compile targets installed.
 - Android SDK + NDK r29 stable (`29.0.14206865`) at `$HOME/Android/sdk`.
 
 ## Phase 2 task tracker
 
-| # | Task | State | Notes |
+| # | Task | State | Commit / Notes |
 |---|---|---|---|
-| 1 | BIP-84 derivation helper | ✅ done | commit `6d764a2` — 9 tests pass (3 BIP-84 official pubkeys byte-identical) |
-| 2 | P2WPKH (bech32) address derivation | ✅ done | commit `63e5097` — 9 tests pass (3 BIP-84 official addresses, rejection of P2PKH, P2SH, Taproot, testnet) |
-| 3 | PSBT signing — single-input | ⏳ TODO | Capture vectors via `bdk-cli` on regtest first. Create `tools/btc-vector-capture/single_input.sh` per plan §3 |
-| 4 | PSBT — multi-input + multi-party | ⏳ TODO | Multi-party returns `psbt:` prefix in `raw_hex` to signal unfinalized. Multi-input owns all keys — finalizes. |
-| 5 | BIP-322 + legacy `signMessage` | ⏳ TODO | Capture from `bdk-cli sign_message --scheme {bip322,legacy}` |
-| 6 | `BtcSigner` trait impl + `JovaWallet` dispatch | ⏳ TODO | Adds `UnsignedTx::Bitcoin { psbt_base64 }`, `SignableMessage::Bitcoin { … }`, `JovaChain::Bitcoin` and routes through new sign_psbt / sign_btc_message |
-| 7 | 12 BTC vectors in `spec/test-vectors.json` | ⏳ TODO | Bump `version` to `"0.3"`. `tools/verify-spec` already rejects `TODO`/`<capture>`/`REPLACE` placeholders |
-| 8 | Vector parity Rust + Swift + Kotlin | ⏳ TODO | Swift parity is CI-only (`macos-latest` runner). Kotlin parity runs locally via JNA + Gradle |
-| 9 | Property tests + 3 fuzz targets | ⏳ TODO | `fuzz_psbt_sign`, `fuzz_btc_address_parse`, `fuzz_bip322_verify`. Update `fuzz/Cargo.toml` `[[bin]]` blocks and `justfile`'s `fuzz` recipe |
-| 10 | Migration spot-check (100/100) | 🛑 **BLOCKED** | `tools/btc-migration-check/known-android-mappings.csv` does **not** exist in the repo. Android team must export it |
-| 11 | Mainnet smoke test | 🛑 **BLOCKED** | Needs human + real BTC funds. Cannot be done autonomously |
-| 12 | PR + CI + tag `v0.2.0` | ⏳ TODO | Strip the `🤖 Generated with Claude Code` line from the plan's PR-body template — repo policy is **NO AI attribution** anywhere |
+| 1 | BIP-84 derivation helper | ✅ done | `6d764a2` |
+| 2 | P2WPKH (bech32) address derivation | ✅ done | `63e5097` |
+| 3 | PSBT signing — single-input | ✅ done | `233409b` + `895918e` (review fix) |
+| 4 | PSBT — multi-input + multi-party | ✅ done | `46d0d52` (multi-input finalize + low-R fix) |
+| 5 | BIP-322 + legacy `signMessage` | ✅ done | `c98fc6b` |
+| 6 | `BtcSigner` trait impl + `JovaWallet` dispatch | ✅ done | `8c29451` |
+| 7 | 12 BTC vectors in `spec/test-vectors.json` | ✅ done | `b27aeef` |
+| 8 | Vector parity Rust + Swift + Kotlin | ✅ done | `acba201` (Swift CI-only; Kotlin source in place, exercised by CI + Task 12 gauntlet) |
+| 9 | Property tests + 3 fuzz targets | ✅ done | `8487fae` |
+| 10 | Migration spot-check (100/100) | 🛑 **BLOCKED** | Tracking issue: [#3](https://github.com/jovachain/jovawallet-core/issues/3). Tool scaffolded; awaits production CSV from Android team. `docs/btc-migration-check.md` documents the gate. |
+| 11 | Mainnet smoke test | 🛑 **BLOCKED** | Tracking issue: [#4](https://github.com/jovachain/jovawallet-core/issues/4). `docs/btc-mainnet-smoke.md` documents the gate. |
+| 12 | Pre-PR gauntlet + PR + tag `v0.2.0` | ⏳ NEXT | Strip the `🤖 Generated with Claude Code` line from the plan's PR-body template — repo policy is **NO AI attribution** anywhere |
 
-## Bitcoin 0.32 API gotchas I hit (so you don't repeat them)
-
-I attempted Tasks 3+5+6 in this session and reverted before commit because the bitcoin 0.32 / secp256k1 0.31 API differs from the plan's snippets. Capture these in your next pass:
-
-1. **`bitcoin::hashes::Hash` trait is not in scope by default.** `to_byte_array()` and `as_byte_array()` are trait methods. Add `use bitcoin::hashes::Hash;` at the top of any module that handles `WPubkeyHash`, `SegwitV0Sighash`, `sha256::Hash`, etc.
-2. **`secp256k1::ecdsa::Signature::normalize_s(&mut self)` returns `()` in 0.31.** Mutates in place — don't write `let sig = secp.sign_ecdsa(...).normalize_s();`. Write `let mut sig = secp.sign_ecdsa(...); sig.normalize_s();`.
-3. **`MessageSignature::to_base64()` does not exist.** Check the current `bitcoin::sign_message` module API. You may need to construct base64 manually or use a different method name.
-4. **`base64` is not a dep of `jova-core-chains` yet.** It's declared in workspace deps but not inherited by chains. Add `base64.workspace = true` to `crates/jova-core-chains/Cargo.toml` when you need it.
-5. **`bdk_wallet` 3.0** is in workspace deps but not used yet by any crate. Inherit it into chains when you start the PSBT work. Its API for `Psbt::finalize_mut` may have moved between minor versions; trust the cargo error messages over the plan snippets.
-6. **`secp256k1::Signature::serialize_der()` exists** but is on the signature value itself, not the result of `normalize_s()`. Pattern: `let sig = secp.sign_ecdsa(&msg, &sk); sig.normalize_s(); sig.serialize_der()`.
-
-The plan snippets in `docs/superpowers/plans/2026-05-05-phase-2-bitcoin.md` describe an older bitcoin API. **Trust the captured test vectors as the contract**, adjust function calls to whatever the current crate uses.
-
-## Phases 3 — 7 status
-
-All still pending. See `docs/superpowers/plans/2026-05-05-phase-N-*.md`. Recap of the major dependency facts:
-
-- **Phase 3 → `v0.3.0`** — Solana (v0 versioned txs via Anza split crates), XRP (`xrpl-rust 1.1`, **not** the unrelated `xrpl` crate on crates.io), and the remaining EVM chains (Arbitrum, Optimism, Base, customEvm — the variants are already in `JovaChain`). XRP vector capture uses `xrpl-py` via pipx (installed). Solana uses `solana-cli` (installed at `~/.local/share/solana/install/active_release/bin/solana`).
-- **Phase 4 → milestone (no tag)** — wallet-app integration, partly out-of-repo. Process plan.
-- **Phase 5 → `v1.0.0`** — hardening, audit prep, cargo-vet wired into CI, RC cycles. External audit is human-coordinated (3-4 week lead time).
-- **Phase 6 → `v1.1.0`** — WASM functional, **EVM + SOL only** (BTC/XRP browser signing deferred per recorded user decision 2026-05-11). `secp256k1-sys` C build for `wasm32-unknown-unknown` requires `-Dmemmove=__builtin_memmove` CFLAG, already in `.cargo/config.toml`.
-- **Phase 7** — `no_std` primitives audit on `thumbv7em-none-eabihf` (the no-std build already runs in CI). Embedded benches and firmware-target proof.
-
-## Hard blockers the next agent should surface to the user
-
-1. **Phase 2 Task 10:** CSV file `tools/btc-migration-check/known-android-mappings.csv` from the Android team. Without it, migration spot-check is not runnable. The directory's `.gitignore` already excludes it from commits — user mnemonics must NOT be committed.
-2. **Phase 2 Task 11:** Mainnet smoke needs ~$5 of BTC + a manual broadcast. The engineer driving the phase performs this.
-3. **Phase 4:** Most work happens in the wallet-app repos, not here. Coordinate with the iOS/Android teams.
-4. **Phase 5:** External audit firm needs to be engaged (3-4 week lead time).
-
-## Suggested execution order for the next agent
-
-1. Resume on `feat/phase-2-bitcoin` (already pushed).
-2. Capture PSBT single-input vector via `bdk-cli` on regtest → drop captures into `tools/btc-vector-capture/captures/*` → write the failing test → implement `sign_psbt` (Task 3) → commit → push.
-3. Capture multi-input + multi-party vectors → tests pass without code change → commit (Task 4) → push.
-4. Capture BIP-322 + legacy vectors → write tests → implement `sign_btc_message` (Task 5) → commit → push.
-5. Add `BtcSigner` trait impl + `JovaWallet` dispatch + the `Bitcoin` variants on `UnsignedTx` / `SignableMessage` / `JovaChain` + FFI mapping updates (Task 6) → commit → push.
-6. Author 12 BTC vectors in `spec/test-vectors.json` (Task 7).
-7. Rust + Swift + Kotlin vector parity (Task 8).
-8. Property tests + 3 fuzz targets (Task 9).
-9. Run the pre-PR gauntlet (commands below).
-10. Open PR for Phase 2. **Strip AI attribution.** Wait for all 6 CI workflows green, squash-merge, tag `v0.2.0`.
-11. Move to Phase 3.
-
-## Useful local commands
+## Pre-PR gauntlet (run before opening the PR for Phase 2)
 
 ```bash
 . "$HOME/.cargo/env"
@@ -105,11 +72,6 @@ export ANDROID_HOME="$HOME/Android/sdk"
 export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/29.0.14206865"
 cd /home/ubuntu/jovawallet-core
 
-# Per-task TDD examples (these passed locally):
-cargo test -p jova-core-primitives --test bip84
-cargo test -p jova-core-chains --test btc_address
-
-# Pre-PR gauntlet (slow on this VM):
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace --locked
@@ -124,30 +86,56 @@ cargo audit
 ( cd bindings/wasm && pnpm install && pnpm test )
 ```
 
-Swift parity is CI-only (`macos-latest` runner). Mirror the Phase 1 pattern in `bindings/swift/Tests/JovaCoreTests/EvmVectorsTests.swift` for each new vector kind.
+Swift parity is CI-only on `macos-latest`.
 
-## Launching a new session with permission bypass
+## Phases 3 — 7 status
 
-The next session should be started with:
+All still pending. See `docs/superpowers/plans/2026-05-05-phase-N-*.md`.
+
+- **Phase 3 → `v0.3.0`** — Solana (v0 versioned txs via Anza split crates), XRP (`xrpl-rust 1.1`, **not** the unrelated `xrpl` crate on crates.io), and the remaining EVM chains (Arbitrum, Optimism, Base, customEvm — the variants are already in `JovaChain`).
+- **Phase 4 → milestone (no tag)** — wallet-app integration, partly out-of-repo.
+- **Phase 5 → `v1.0.0`** — hardening, audit prep, cargo-vet wired into CI, RC cycles. External audit is human-coordinated.
+- **Phase 6 → `v1.1.0`** — WASM functional, **EVM + SOL only** (BTC/XRP browser signing deferred per recorded user decision 2026-05-11).
+- **Phase 7** — `no_std` primitives audit on `thumbv7em-none-eabihf`.
+
+## Hard blockers the next agent should surface to the user
+
+1. **Phase 2 Task 10:** CSV file from Android team. [Issue #3](https://github.com/jovachain/jovawallet-core/issues/3).
+2. **Phase 2 Task 11:** Mainnet smoke. [Issue #4](https://github.com/jovachain/jovawallet-core/issues/4).
+3. **Phase 4:** Most work happens in the wallet-app repos (iOS/Android team).
+4. **Phase 5:** External audit firm needs to be engaged (3-4 week lead time).
+5. **Mac-only work (any phase):** Swift `swift test` / iOS XCFramework / App Store submission. CI runs Swift parity on `macos-latest`; deep iOS work needs a Mac dev machine.
+
+## Bitcoin 0.32 / secp256k1 API gotchas (learned this session — for future BTC work)
+
+1. **`bitcoin::hashes::Hash` trait** needed in scope for `.to_byte_array()` / `.as_byte_array()`.
+2. **`secp.sign_ecdsa(...).normalize_s()`** doesn't chain — `normalize_s` mutates in place and returns `()`. Bind with `let mut sig = secp.sign_ecdsa(...); sig.normalize_s();`.
+3. **Low-R grinding** matters for byte-stable BIP-143 output. Use `secp.sign_ecdsa_low_r`, not `sign_ecdsa`.
+4. **`bitcoin 0.32`'s re-exported `secp256k1` is version 0.29**, NOT the workspace's 0.31. Two secp versions coexist in the build. Keep API boundaries pure-bytes (`XPrv::private_key_bytes()`, `public_key_compressed()`) to avoid leaking the version mismatch.
+5. **`bitcoin::Psbt::finalize_mut` does NOT exist** on bitcoin 0.32 — that's in `miniscript::psbt::PsbtExt`. For P2WPKH single-party, finalize manually: clear `partial_sigs`, set `final_script_witness = Witness::from_slice(&[sig_der_with_sighash_byte, compressed_pk])`, call `psbt.extract_tx_unchecked_fee_rate()`.
+6. **`bitcoin::ecdsa::Signature::to_vec()`** returns `sig_der || sighash_byte` in one shot. Convenient for witness construction.
+
+## Open GitHub issues opened this session
+
+- **#3**: Phase 2 Task 10 — CSV file gating BTC migration spot-check.
+- **#4**: Phase 2 Task 11 — mainnet smoke test.
+
+## Useful local commands
 
 ```bash
-claude --dangerously-skip-permissions
+. "$HOME/.cargo/env"
+cd /home/ubuntu/jovawallet-core
+
+cargo test -p jova-core-chains
+cargo test -p jova-core --test vectors_btc       # 9 tests (5 dispatch + 4 vector loops)
+cargo test -p jova-core --test properties_btc    # 6 proptests
+cargo run -p jova-verify-spec                    # spec drift + placeholder check
+cargo run -p jova-btc-migration-check            # requires the CSV
 ```
-
-That skips all tool-permission prompts. The first agent in this session was launched with that flag already, so all the cargo installs, file edits, and `git push` operations went through without confirmation.
-
-## Do-not-litigate decisions (recap)
-
-- WASM scope: BTC/XRP browser signing deferred beyond v1.1.
-- Conventional Commits from Phase 0 onward.
-- No AI attribution anywhere in commits, PR bodies, or files.
-- Vectors come from external reference signers (`cast`, `bdk-cli`, `solana-cli`, `xrpl-py`); Rust code matches the captured vector byte-for-byte.
-- Engine confinement: `bdk_wallet`, `alloy`, `bitcoin`, `solana-*`, `xrpl-rust` only inside `crates/jova-core-chains`.
 
 ## What this session did NOT do
 
-- Did not open a PR (waiting for more substantive Phase 2 progress — Tasks 3-9 still ahead).
-- Did not capture any PSBT or BIP-322 vectors.
-- Did not finish wiring `UnsignedTx::Bitcoin` / `SignableMessage::Bitcoin` / `JovaChain::Bitcoin` — attempted Tasks 3+5+6 in one batch, hit bitcoin 0.32 API mismatches, reverted to keep the repo green. See "Bitcoin 0.32 API gotchas" above.
+- Did not open a PR (Task 12). Pre-PR gauntlet remains to be run, then PR + CI green + squash-merge + tag `v0.2.0`.
+- Did not run the Kotlin AAR build (Task 12 gauntlet does this; ~20-30 min on this VM).
+- Did not run the fuzzers for 60s each (slow VM; CI does this).
 - Did not touch Phase 3+ code or plans.
-- Did not run the full pre-PR gauntlet.
