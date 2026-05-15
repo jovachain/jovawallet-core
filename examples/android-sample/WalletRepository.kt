@@ -26,27 +26,30 @@ import uniffi.jova_core_ffi.SignedTx
 import uniffi.jova_core_ffi.Signature
 import uniffi.jova_core_ffi.UnsignedTx
 
-/** Errors surfaced to UI code. Wraps the FfiException variants with the chain hint. */
+/** Errors surfaced to UI code. Wraps the FfiException variants with the underlying message. */
 sealed class WalletError(message: String) : Exception(message) {
-    object InvalidMnemonic : WalletError("invalid mnemonic")
-    object InvalidPassphrase : WalletError("invalid passphrase")
-    class InvalidAddress(val chain: JovaChain) : WalletError("invalid address for $chain")
-    class UnsupportedChain(val chain: JovaChain) : WalletError("unsupported chain: $chain")
+    class InvalidMnemonic(val reason: String) : WalletError("invalid mnemonic: $reason")
+    class InvalidPassphrase(val reason: String) : WalletError("invalid passphrase: $reason")
+    class InvalidAddress(val reason: String) : WalletError("invalid address: $reason")
+    class UnsupportedChain(val reason: String) : WalletError("unsupported chain: $reason")
     class MalformedUnsignedTx(val reason: String) : WalletError("malformed unsigned tx: $reason")
     class MalformedSignableMessage(val reason: String) : WalletError("malformed signable message: $reason")
     class SigningFailed(val reason: String) : WalletError("signing failed: $reason")
     class Internal(val reason: String) : WalletError("internal: $reason")
 
     companion object {
-        fun from(ffi: FfiException): WalletError = when (ffi) {
-            is FfiException.InvalidMnemonic -> InvalidMnemonic
-            is FfiException.InvalidPassphrase -> InvalidPassphrase
-            is FfiException.InvalidAddress -> InvalidAddress(ffi.chain)
-            is FfiException.UnsupportedChain -> UnsupportedChain(ffi.chain)
-            is FfiException.MalformedUnsignedTx -> MalformedUnsignedTx(ffi.reason)
-            is FfiException.MalformedSignableMessage -> MalformedSignableMessage(ffi.reason)
-            is FfiException.SigningFailed -> SigningFailed(ffi.reason)
-            is FfiException.Internal -> Internal(ffi.reason)
+        fun from(ffi: FfiException): WalletError {
+            val msg = ffi.message.orEmpty()
+            return when (ffi) {
+                is FfiException.InvalidMnemonic -> InvalidMnemonic(msg)
+                is FfiException.InvalidPassphrase -> InvalidPassphrase(msg)
+                is FfiException.InvalidAddress -> InvalidAddress(msg)
+                is FfiException.UnsupportedChain -> UnsupportedChain(msg)
+                is FfiException.MalformedUnsignedTx -> MalformedUnsignedTx(msg)
+                is FfiException.MalformedSignableMessage -> MalformedSignableMessage(msg)
+                is FfiException.SigningFailed -> SigningFailed(msg)
+                is FfiException.Internal -> Internal(msg)
+            }
         }
     }
 }
