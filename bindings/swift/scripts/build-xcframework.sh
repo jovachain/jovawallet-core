@@ -7,6 +7,13 @@ cd "$(dirname "$0")/.."
 # shellcheck source=/dev/null
 . "$HOME/.cargo/env"
 
+# Pin deployment targets to match Package.swift platforms. Without these,
+# clang stamps C objects (libsecp256k1, etc.) with the host's macOS version,
+# producing 8 `ld: warning: object file was built for newer 'macOS' version`
+# lines in every downstream SPM consumer's build log.
+export MACOSX_DEPLOYMENT_TARGET=11.0
+export IPHONEOS_DEPLOYMENT_TARGET=14.0
+
 # Build for every Apple target.
 # iOS sim is arm64-only — Apple has fully deprecated the Intel iOS simulator.
 for target in aarch64-apple-ios aarch64-apple-ios-sim aarch64-apple-darwin x86_64-apple-darwin; do
