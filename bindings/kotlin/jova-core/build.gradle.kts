@@ -1,10 +1,11 @@
 plugins {
-    id("com.android.library") version "8.5.0"
+    id("com.android.library") version "8.10.1"
     kotlin("android") version "1.9.24"
 }
 
 android {
     namespace = "io.jova.core"
+    ndkVersion = "29.0.14206865"
     compileSdk = 36
     defaultConfig {
         minSdk = 24
