@@ -2,6 +2,22 @@
 
 **Status:** Phases 2 through 7 shipped this session. `v0.3.0` tagged on `main`. The remaining `v1.0.0`, `v1.1.0`, `v1.2.0` tags are gated on external blockers (audit, app-team rollout, bug bounty funding, hardware repo) tracked as GitHub issues #3, #4, #8–#14.
 
+## Mac handoff session — 2026-05-15
+
+Ran on macOS 26.4 / Xcode 26.5 / Rust 1.95.0 / uniffi 0.31.1. All Mac-required Phase 4 deliverables landed.
+
+### Shipped
+1. **iOS XCFramework rebuilt** for `main` at `1a8c961`. Cold build 3:36. Three slices (`ios-arm64`, `ios-arm64-simulator`, `macos-arm64_x86_64`) each verified with `lipo -info`. `swift test --parallel` from `bindings/swift/` → 16/16 green. Zipped artifact 270 MB, sha256 `506b0bb5f2bc23f72daca43f0dbada729f5506a6761569394e7382f961a39a07`.
+2. **SwiftPM satellite repo** `github.com/jovachain/jovawallet-core-swift` created public, initial commit `7b57dc7`, release `v0.3.0` published with the zipped XCFramework as the lone asset. A throwaway SPM consumer (`.package(url: "…jovawallet-core-swift", from: "0.3.0")`) resolves, downloads the binary artifact, builds, and runs cleanly.
+3. **iOS sample verified.** `examples/ios-sample/` compiles for macOS (host) and iOS simulator after fixing two committed source bugs (see commits in this PR). CLI smoke test exercised `JovaWallet.fromMnemonic` + `address(chain:)` + `signTx` + `signMessage` for ethereum, bitcoin, solana, xrp — all produced expected outputs.
+4. **Android AAR built.** All 4 ABIs as correct ELF arches. `./gradlew :jova-core:test` → 16/16 green via JNA against the host dylib (same vectors as Swift). Android sample now compiles after fixing `WalletRepository.kt`.
+
+### Known follow-ups (not blocking v0.3.0; recommend tracking as issues)
+- **macOS deployment target warnings.** The macOS slices of the XCFramework were built without `MACOSX_DEPLOYMENT_TARGET=11.0`, so `secp256k1` `.o` files were tagged with the host's macOS 26.4. Consumers see 8 `ld: warning: object file … was built for newer 'macOS' version (26.4) than being linked (11.0)` warnings. Non-fatal — symbols all resolve — but a real build-flag drift. Fix in `bindings/swift/scripts/build-xcframework.sh` by adding `MACOSX_DEPLOYMENT_TARGET=11.0` to the two `cargo build … apple-darwin` invocations.
+- **Android Gradle Plugin 8.5.0 vs compileSdk=36.** AGP 8.5.0 was tested up to `compileSdk = 34`; bump to AGP 8.7+ to silence the warning.
+- **NDK strip version mismatch.** Module declares NDK `26.1.10909125` in AGP config but the installed NDK is `29.0.14206865` — stripping fell back to packaging unstripped `.so`. Update the gradle config to match the installed NDK.
+- **Tests in satellite repo can't find `spec/test-vectors.json`.** Committed for reference; will need bundling or env-var fallback if the satellite ever needs its own CI. Not load-bearing for v0.3.0.
+
 ## What's on `main` now
 
 ```

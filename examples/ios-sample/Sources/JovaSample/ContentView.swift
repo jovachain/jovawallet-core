@@ -13,9 +13,9 @@ struct ContentView: View {
     @State private var error: String?
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             List {
-                Section("Addresses (BIP-39 abandon-about)") {
+                Section(header: Text("Addresses (BIP-39 abandon-about)")) {
                     if addresses.isEmpty {
                         Text("Tap derive →")
                     }
@@ -27,14 +27,14 @@ struct ContentView: View {
                     }
                 }
                 if let error {
-                    Section("Error") {
+                    Section(header: Text("Error")) {
                         Text(error).foregroundColor(.red)
                     }
                 }
             }
             .navigationTitle("JovaSample")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .automatic) {
                     Button("Derive") { deriveAll() }
                 }
             }

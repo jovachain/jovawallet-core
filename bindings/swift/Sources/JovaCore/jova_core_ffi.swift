@@ -1314,13 +1314,10 @@ public enum SignableMessage: Equatable, Hashable {
     case evmTypedDataV4(json: String
     )
     /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     * Phase 3 — declared for forward compatibility; returns UnsupportedChain until implemented.
      */
     case solana(messageBase64: String
     )
-    /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-     */
     case bitcoin(message: String, address: String, scheme: BtcMsgScheme
     )
 
@@ -1412,18 +1409,17 @@ public enum UnsignedTx: Equatable, Hashable {
     
     case evm(tx: EvmUnsigned
     )
-    /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-     */
     case bitcoin(psbtBase64: String
     )
     /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     * Phase 3c — declared for forward compatibility; returns UnsupportedChain until implemented.
      */
     case solana(messageBase64: String, recentBlockhash: String
     )
     /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     * XRPL transaction (Phase 3b): a canonical XRPL JSON object as a string.
+     * The signer injects `SigningPubKey` and `TxnSignature`; callers must not
+     * pre-populate those fields.
      */
     case xrp(txJson: String
     )

@@ -1981,7 +1981,7 @@ sealed class SignableMessage {
     }
     
     /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     * Phase 3 — declared for forward compatibility; returns UnsupportedChain until implemented.
      */
     data class Solana(
         val `messageBase64`: kotlin.String) : SignableMessage()
@@ -1992,9 +1992,6 @@ sealed class SignableMessage {
         companion object
     }
     
-    /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-     */
     data class Bitcoin(
         val `message`: kotlin.String, 
         val `address`: kotlin.String, 
@@ -2116,9 +2113,6 @@ sealed class UnsignedTx {
         companion object
     }
     
-    /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
-     */
     data class Bitcoin(
         val `psbtBase64`: kotlin.String) : UnsignedTx()
         
@@ -2129,7 +2123,7 @@ sealed class UnsignedTx {
     }
     
     /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     * Phase 3c — declared for forward compatibility; returns UnsupportedChain until implemented.
      */
     data class Solana(
         val `messageBase64`: kotlin.String, 
@@ -2142,7 +2136,9 @@ sealed class UnsignedTx {
     }
     
     /**
-     * Phase 2 — declared for forward compatibility; returns UnsupportedChain until implemented.
+     * XRPL transaction (Phase 3b): a canonical XRPL JSON object as a string.
+     * The signer injects `SigningPubKey` and `TxnSignature`; callers must not
+     * pre-populate those fields.
      */
     data class Xrp(
         val `txJson`: kotlin.String) : UnsignedTx()
