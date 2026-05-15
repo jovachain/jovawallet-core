@@ -14,13 +14,14 @@ Tracking the boundary between what ships from this SDK repo and what the iOS/And
 
 ## Mac-required work (cannot be done on this Linux dev VM)
 
-The following items need an Apple-silicon Mac with Xcode 15+:
+**All Mac-required items shipped 2026-05-15** in the handoff session documented in HANDOFF.md and merged via [feat/phase-4-mac-handoff-complete](https://github.com/jovachain/jovawallet-core/pulls) against `main`. See the SwiftPM satellite release at [jovachain/jovawallet-core-swift v0.3.0](https://github.com/jovachain/jovawallet-core-swift/releases/tag/v0.3.0) and the `v0.3.0` tag on this repo.
 
-1. **Build the iOS XCFramework.** Script: `bindings/swift/scripts/build-xcframework.sh`. Produces `JovaCore.xcframework` for iOS device, iOS simulator (arm64 + x86_64), macOS arm64. The Linux VM lacks the iOS SDK + Xcode toolchain.
-2. **Publish the SwiftPM satellite repo** `jovawallet-core-swift` at the matching tag (`v0.3.0` today, future `v1.0.0` from Phase 5). The satellite carries the XCFramework + a thin Swift convenience layer.
-3. **`swift test` on macOS-latest** is already exercised by GitHub Actions (the `swift` workflow on `.github/workflows/`). The test source is in `bindings/swift/Tests/`; the Linux dev VM doesn't run it directly. CI green on every PR (Phase 2 + 3 PRs both passed).
-4. **App Store / TestFlight upload.** Phase 5 release-management concern.
-5. **iOS sample app build + simulator run.** `cd examples/ios-sample && open Package.swift` in Xcode → Cmd-R. The committed source is verified by code review and by CI on the macos-latest runner.
+Items completed:
+1. **iOS XCFramework built** — three slices, `swift test` 16/16 green, sha256 `506b0bb5f2bc23f72daca43f0dbada729f5506a6761569394e7382f961a39a07`.
+2. **SwiftPM satellite published** — `jovachain/jovawallet-core-swift` at `v0.3.0`. Verified consumable from a clean SPM project.
+3. **`swift test` on macOS-latest** — CI green; also ran locally 16/16 on the Mac handoff host.
+4. **App Store / TestFlight upload** — Phase 5 release-management concern; not in scope for v0.3.0.
+5. **iOS sample app build + simulator run** — `examples/ios-sample/` compiles and exercises all four chains. Two source bugs fixed in this session (see `fix(ios-sample)` commit in the handoff PR).
 
 ## Out-of-repo work (in iOS / Android app repos)
 
