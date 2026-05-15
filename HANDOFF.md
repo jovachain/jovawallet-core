@@ -1,6 +1,6 @@
-# HANDOFF — autonomous session complete (2026-05-14)
+# HANDOFF
 
-**Status:** Phases 2 through 7 shipped this session. `v0.3.0` tagged on `main`. The remaining `v1.0.0`, `v1.1.0`, `v1.2.0` tags are gated on external blockers (audit, app-team rollout, bug bounty funding, hardware repo) tracked as GitHub issues #3, #4, #8–#14.
+**Status (2026-05-16):** Phases 2 through 7 shipped. **`v0.3.1` is the latest tag on `main`**, with the matching SwiftPM satellite release at `github.com/jovachain/jovawallet-core-swift@v0.3.1`. The next milestone (`v1.0.0`) is gated on external blockers (audit, app-team rollout, bug bounty funding) tracked as GitHub issues #3, #4, #8–#14.
 
 ## Mac handoff session — 2026-05-15
 
@@ -12,28 +12,37 @@ Ran on macOS 26.4 / Xcode 26.5 / Rust 1.95.0 / uniffi 0.31.1. All Mac-required P
 3. **iOS sample verified.** `examples/ios-sample/` compiles for macOS (host) and iOS simulator after fixing two committed source bugs (see commits in this PR). CLI smoke test exercised `JovaWallet.fromMnemonic` + `address(chain:)` + `signTx` + `signMessage` for ethereum, bitcoin, solana, xrp — all produced expected outputs.
 4. **Android AAR built.** All 4 ABIs as correct ELF arches. `./gradlew :jova-core:test` → 16/16 green via JNA against the host dylib (same vectors as Swift). Android sample now compiles after fixing `WalletRepository.kt`.
 
-### Known follow-ups (not blocking v0.3.0; recommend tracking as issues)
-- **macOS deployment target warnings.** The macOS slices of the XCFramework were built without `MACOSX_DEPLOYMENT_TARGET=11.0`, so `secp256k1` `.o` files were tagged with the host's macOS 26.4. Consumers see 8 `ld: warning: object file … was built for newer 'macOS' version (26.4) than being linked (11.0)` warnings. Non-fatal — symbols all resolve — but a real build-flag drift. Fix in `bindings/swift/scripts/build-xcframework.sh` by adding `MACOSX_DEPLOYMENT_TARGET=11.0` to the two `cargo build … apple-darwin` invocations.
-- **Android Gradle Plugin 8.5.0 vs compileSdk=36.** AGP 8.5.0 was tested up to `compileSdk = 34`; bump to AGP 8.7+ to silence the warning.
-- **NDK strip version mismatch.** Module declares NDK `26.1.10909125` in AGP config but the installed NDK is `29.0.14206865` — stripping fell back to packaging unstripped `.so`. Update the gradle config to match the installed NDK.
-- **Tests in satellite repo can't find `spec/test-vectors.json`.** Committed for reference; will need bundling or env-var fallback if the satellite ever needs its own CI. Not load-bearing for v0.3.0.
+### Follow-ups from this session
+| Issue | Topic | Status |
+|---|---|---|
+| [#21](https://github.com/jovachain/jovawallet-core/issues/21) | XCFramework macOS deployment target flag | ✅ Closed by PR #23 |
+| [#20](https://github.com/jovachain/jovawallet-core/issues/20) | AGP 8.5.0 vs `compileSdk = 36` | ✅ Closed by PR #24 (bumped to AGP 8.10.1) |
+| [#22](https://github.com/jovachain/jovawallet-core/issues/22) | NDK strip version mismatch | ✅ Closed by PR #24 (pinned `ndkVersion = "29.0.14206865"`) |
+| [#19](https://github.com/jovachain/jovawallet-core/issues/19) | Satellite tests can't locate `spec/test-vectors.json` | Open — cosmetic; satellite ships binary, not test coverage |
+
+### Closeout — `v0.3.1` (2026-05-15)
+
+Tagged `v0.3.1` on `main` at `10f324d` after PRs #18 and #23 merged. Rebuilt the XCFramework with the deployment-target fix (zip sha256 `6fc196dcffe5ef502c670d3cadfc2507a38fa2986d966a933c40be81cab0a5f2`) and published satellite v0.3.1 with that asset. A throwaway SPM consumer at `from: "0.3.1"` resolves, downloads the binary, and builds with **0 linker warnings** — the regression every prior consumer build saw is gone. Subsequent PR #24 closed the AGP + NDK gradle drift on `main`. Outstanding work all moves out-of-repo from here.
 
 ## What's on `main` now
 
 ```
+62617dd  fix(kotlin): bump AGP to 8.10.1 + pin ndkVersion to r29 (#24)
+10f324d  fix(swift): pin XCFramework deployment targets to package floors (#23)
+7975f8c  feat: Mac handoff complete — XCFramework, SwiftPM satellite v0.3.0, sample fixes (#18)
+1a8c961  docs: add MAC-HANDOFF.md (since retired)
+ee641dd  docs: refresh HANDOFF after Phases 2-7 ship + v0.3.0 tag
 57e6266  feat(primitives): Phase 7 hardware-wallet readiness (#17)
 954fb1e  Phase 6: WASM functional (EVM + SOL) (#16)
 581e805  chore(phase-5): hardening pipeline scaffolding + v1.0 release gates (#15)
 a69c26a  docs(phase-4): example apps + Mac-required boundary document (#7)
 a15ef36  Phase 3: Solana + XRP + remaining EVM (v0.3.0) (#6)
 a18f3e9  Phase 2: Bitcoin (BIP-84 + PSBT + BIP-322) — v0.2.0 (#5)
-bcb9751  docs: add Linux dev VM setup
 2d1aa12  Phase 1: EVM end-to-end (v0.1.0) (#2)
 e07107f  Phase 0: repo bootstrap (PR #1)
-d035c58  initial docs
 ```
 
-Tags: `v0.0.1`, `v0.1.0`, `v0.2.0`, `v0.3.0`. The next tag (`v1.0.0` from Phase 5 completion) is the audit / RC / bug-bounty milestone.
+Tags: `v0.0.1`, `v0.1.0`, `v0.2.0`, `v0.3.0`, `v0.3.1`. The next tag (`v1.0.0` from Phase 5 completion) is the audit / RC / bug-bounty milestone.
 
 ## What each phase shipped
 
@@ -96,15 +105,15 @@ After v1.0.0 closes: tag v1.1.0 with the Phase 6 WASM deliverables; the Phase 6 
 
 After Phase 6 v1.1.0 ships: tag v1.2.0 once the firmware repo's own v1.0 lands (separate codebase, separate team).
 
-## Mac-required work (for any agent on a non-Mac host)
+## Mac-required work — complete as of `v0.3.1`
 
-Per `docs/phase-4-status.md`:
-
-1. **Build the iOS XCFramework.** `bindings/swift/scripts/build-xcframework.sh` on a Mac with Xcode 15+. Produces `JovaCore.xcframework` for iOS device + simulator + macOS.
-2. **Publish the SwiftPM satellite repo** `jovawallet-core-swift` at the matching tag. Carries the XCFramework + Swift convenience layer.
-3. **`swift test` on macOS-latest** is exercised by CI (the `swift` workflow on every PR — confirmed green on PRs #5, #6, #7, #15, #16, #17).
-4. **App Store / TestFlight upload.** Phase 5 release-management concern.
-5. **iOS sample app build + simulator run.** `cd examples/ios-sample && open Package.swift` in Xcode.
+| Item | Status |
+|---|---|
+| Build the iOS XCFramework | ✅ Shipped in `v0.3.1` via `bindings/swift/scripts/build-xcframework.sh` (deployment targets pinned to `MACOSX_DEPLOYMENT_TARGET=11.0` and `IPHONEOS_DEPLOYMENT_TARGET=14.0`) |
+| Publish SwiftPM satellite repo | ✅ `github.com/jovachain/jovawallet-core-swift@v0.3.1` published; throwaway SPM consumer verified — 0 linker warnings |
+| `swift test` on macOS-latest | ✅ Green on every PR via the `swift` CI workflow |
+| iOS sample app build | ✅ Compiles for macOS host + iOS simulator slice; runtime smoke covers BTC, EVM, SOL, XRP |
+| App Store / TestFlight upload | Phase 5 release-management concern (app team, not SDK) |
 
 ## VM environment (still as of 2026-05-14)
 
