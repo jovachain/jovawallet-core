@@ -14,28 +14,28 @@
 import Foundation
 import JovaCore
 
-/// Errors surfaced to UI code. Wraps the FfiException variants with a chain
+/// Errors surfaced to UI code. Wraps the FfiError variants with a message
 /// hint for the per-chain telemetry the production app emits.
 enum WalletError: Error {
-    case invalidMnemonic
-    case invalidPassphrase
-    case invalidAddress(chain: JovaChain)
-    case unsupportedChain(chain: JovaChain)
+    case invalidMnemonic(reason: String)
+    case invalidPassphrase(reason: String)
+    case invalidAddress(reason: String)
+    case unsupportedChain(reason: String)
     case malformedUnsignedTx(reason: String)
     case malformedSignableMessage(reason: String)
     case signingFailed(reason: String)
     case `internal`(reason: String)
 
-    init(_ ffi: FfiException) {
+    init(_ ffi: FfiError) {
         switch ffi {
-        case .InvalidMnemonic:          self = .invalidMnemonic
-        case .InvalidPassphrase:        self = .invalidPassphrase
-        case let .InvalidAddress(chain): self = .invalidAddress(chain: chain)
-        case let .UnsupportedChain(chain): self = .unsupportedChain(chain: chain)
-        case let .MalformedUnsignedTx(reason): self = .malformedUnsignedTx(reason: reason)
-        case let .MalformedSignableMessage(reason): self = .malformedSignableMessage(reason: reason)
-        case let .SigningFailed(reason): self = .signingFailed(reason: reason)
-        case let .Internal(reason):     self = .internal(reason: reason)
+        case let .InvalidMnemonic(m):          self = .invalidMnemonic(reason: m)
+        case let .InvalidPassphrase(m):        self = .invalidPassphrase(reason: m)
+        case let .InvalidAddress(m):           self = .invalidAddress(reason: m)
+        case let .UnsupportedChain(m):         self = .unsupportedChain(reason: m)
+        case let .MalformedUnsignedTx(m):      self = .malformedUnsignedTx(reason: m)
+        case let .MalformedSignableMessage(m): self = .malformedSignableMessage(reason: m)
+        case let .SigningFailed(m):            self = .signingFailed(reason: m)
+        case let .Internal(m):                self = .internal(reason: m)
         }
     }
 }
@@ -56,12 +56,12 @@ final class WalletService {
         let wallet: JovaWallet
         do {
             wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: passphrase)
-        } catch let e as FfiException {
+        } catch let e as FfiError {
             throw WalletError(e)
         }
         do {
             return try wallet.address(chain: chain, account: 0)
-        } catch let e as FfiException {
+        } catch let e as FfiError {
             throw WalletError(e)
         }
     }
@@ -117,12 +117,12 @@ final class WalletService {
         let wallet: JovaWallet
         do {
             wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: passphrase)
-        } catch let e as FfiException {
+        } catch let e as FfiError {
             throw WalletError(e)
         }
         do {
             return try wallet.signTx(tx: unsigned)
-        } catch let e as FfiException {
+        } catch let e as FfiError {
             throw WalletError(e)
         }
     }
@@ -131,12 +131,12 @@ final class WalletService {
         let wallet: JovaWallet
         do {
             wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: passphrase)
-        } catch let e as FfiException {
+        } catch let e as FfiError {
             throw WalletError(e)
         }
         do {
             return try wallet.signMessage(msg: msg)
-        } catch let e as FfiException {
+        } catch let e as FfiError {
             throw WalletError(e)
         }
     }
