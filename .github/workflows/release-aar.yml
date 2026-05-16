@@ -1,0 +1,107 @@
+name: release-aar
+# Builds the Kotlin/Android AAR on tag push and attaches it to the matching
+# GitHub Release. Mirrors the build steps in ci-bindings-kotlin.yml.
+#
+# Until the SDK is published to Maven Central (gated on v1.0.0 + audit),
+# this is how downstream Android apps consume a versioned SDK build:
+#
+#   1. Download jova-core-<version>.aar from the GitHub Release.
+#   2. Drop into app/libs/ and reference as:
+#        implementation(files("libs/jova-core-<version>.aar"))
+#
+# Trigger modes:
+#   - push to a tag matching v*.*.*       — automatic on every release tag
+#   - workflow_dispatch with `tag` input  — backfill an existing release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build and attach (e.g. v0.3.1)'
+        required: true
+        type: string
+
+jobs:
+  build-and-attach:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # required to upload release assets
+    steps:
+      - name: Resolve target ref
+        id: ref
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ref=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+            echo "version=${{ inputs.tag }}" | sed 's/=v/=/' >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android,i686-linux-android
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ubuntu-release-aar-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ubuntu-release-aar-cargo-
+
+      - uses: nttld/setup-ndk@v1.6.0
+        id: ndk
+        with:
+          ndk-version: r29
+
+      - name: Install cargo-ndk and uniffi-bindgen
+        run: |
+          cargo install cargo-ndk --locked
+          cargo install uniffi --features cli --locked
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install Android SDK platform 36
+        run: |
+          yes | sudo ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
+            "platforms;android-36" || \
+          yes | sudo ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
+            --sdk_root="${ANDROID_SDK_ROOT}" "platforms;android-36"
+
+      - name: Build AAR
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: ./bindings/kotlin/scripts/build-aar.sh
+
+      - name: Rename + checksum
+        id: asset
+        run: |
+          VERSION="${{ steps.ref.outputs.version }}"
+          SRC="bindings/kotlin/jova-core/build/outputs/aar/jova-core-release.aar"
+          DST="jova-core-${VERSION}.aar"
+          cp "$SRC" "$DST"
+          shasum -a 256 "$DST" > "${DST}.sha256"
+          echo "aar=${DST}" >> "$GITHUB_OUTPUT"
+          echo "sha=${DST}.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Attach to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ref.outputs.ref }}
+          files: |
+            ${{ steps.asset.outputs.aar }}
+            ${{ steps.asset.outputs.sha }}
+          fail_on_unmatched_files: true
