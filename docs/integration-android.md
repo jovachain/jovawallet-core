@@ -10,7 +10,28 @@ The Android app gets the SDK as a Maven Central dependency. The artifact contain
 
 ## Adding the dependency
 
-In `app/build.gradle.kts`:
+### Today (pre-v1.0): GitHub Releases AAR
+
+Until v1.0.0 ships to Maven Central (gated on the external audit — see [issue #8](https://github.com/jovachain/jovawallet-core/issues/8)), the AAR is distributed as a release asset on each tag.
+
+1. Download the AAR for the version you want from [https://github.com/jovachain/jovawallet-core/releases](https://github.com/jovachain/jovawallet-core/releases). The asset is named `jova-core-<version>.aar` and is accompanied by a `.sha256` file.
+2. Verify the checksum and drop the AAR into your app module's `libs/` folder.
+3. In `app/build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation(files("libs/jova-core-0.3.1.aar"))
+    // Required transitive deps — the file-based AAR import doesn't propagate them.
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+}
+```
+
+Each version bump is a swap of the AAR file + a one-line edit. The `.github/workflows/release-aar.yml` workflow builds and attaches the AAR automatically on every `v*.*.*` tag push, so consumers always have a versioned artifact to pull.
+
+### Post-v1.0: Maven Central
+
+Once the audit closes and v1.0.0 ships, the same SDK will be available as a normal Maven Central dependency:
 
 ```kotlin
 dependencies {
@@ -29,7 +50,7 @@ dependencyResolutionManagement {
 }
 ```
 
-That's it — no manual JNI setup, no NDK in your build, no `web3j` / `bitcoinj` / `bdk-android` to pull in.
+Either way — no manual JNI setup, no NDK in your build, no `web3j` / `bitcoinj` / `bdk-android` to pull in.
 
 ## Minimum platform versions
 
