@@ -5,19 +5,26 @@ use jova_core_chains::{
 use jova_core_primitives::{
     DerivationPath, Ed25519Xprv, Mnemonic, Seed, derive_ed25519, derive_secp256k1,
 };
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::chain::JovaChain;
 use crate::error::JovaError;
 
 /// What a `JovaWallet` derives from: either a full BIP-39 seed (HD wallet)
 /// or a single imported leaf private key bound to one chain.
+///
+/// `Zeroize` + `ZeroizeOnDrop` ensure the raw 32-byte key material is
+/// overwritten when the enum drops. `JovaChain` is not secret and is
+/// skipped. The `Seed` variant is already `ZeroizeOnDrop` via
+/// `jova_core_primitives::Seed`.
+#[derive(Zeroize, ZeroizeOnDrop)]
 enum KeyMaterial {
     /// HD wallet: per-chain keys are BIP-32 / SLIP-10 derived from this seed.
     Seed(Seed),
     /// Imported secp256k1 leaf key (EVM family, Bitcoin, or XRP). Serves only `chain`.
-    Secp256k1 { key: [u8; 32], chain: JovaChain },
+    Secp256k1 { key: [u8; 32], #[zeroize(skip)] chain: JovaChain },
     /// Imported ed25519 leaf key (Solana). Serves only `chain`.
-    Ed25519 { key: [u8; 32], chain: JovaChain },
+    Ed25519 { key: [u8; 32], #[zeroize(skip)] chain: JovaChain },
 }
 
 pub struct JovaWallet {
@@ -52,8 +59,6 @@ impl JovaWallet {
     /// `UnsupportedChain`.
     pub fn from_private_key(hex: &str, chain: &JovaChain) -> Result<Self, JovaError> {
         let key = parse_private_key_hex(hex)?;
-        // ed25519 chains (Solana) handled in a later task; for now route
-        // every non-secp chain through the secp branch via evm_chain_id/btc/xrp.
         let is_secp = matches!(
             chain,
             JovaChain::Bitcoin | JovaChain::Xrp

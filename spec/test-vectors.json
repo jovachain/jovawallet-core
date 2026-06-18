@@ -1031,7 +1031,7 @@
         "signed_hex": "0x02f8730180843b9aca008504a817c800825208943535353535353535353535353535353535353535880de0b6b3a764000080c001a0b3d7e5d4775918a0ec38e4f9da6263f69c2072c0e177ff9aa274575bfba17d04a062182875ae92e4de08aaf8ea1a43d3ea0d836745788801cdc79ccc473a76dfd9",
         "tx_hash": "0xfa109002a68309c6973db528fd253fc26fa067234090c821d0664d30d281fd22"
       },
-      "source": "JovaWallet::from_private_key + sign_tx EIP-1559 transfer with the EIP-155 key; captured via cargo test -p jova-core --test capture_sign -- --nocapture",
+      "source": "JovaWallet::from_private_key + sign_tx EIP-1559 transfer with the EIP-155 key; locked in crates/jova-core/tests/vectors_private_key.rs",
       "source_url": "internal-sdk-capture"
     }
   ]
