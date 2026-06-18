@@ -240,6 +240,8 @@ fn imported_evm_key_can_sign_evm_tx() {
         signed.raw_hex
     );
     assert!(!signed.raw_hex.is_empty(), "signed EVM tx raw_hex must be non-empty");
+    assert!(signed.raw_hex.len() > 10, "signed EVM tx hex should be a full RLP encoding, got {}", signed.raw_hex);
+    assert!(!signed.tx_hash.is_empty(), "signed EVM tx tx_hash must be non-empty");
 }
 
 #[test]
