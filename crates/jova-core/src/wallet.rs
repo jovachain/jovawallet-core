@@ -71,10 +71,19 @@ impl JovaWallet {
                     chain: chain.clone(),
                 },
             })
+        } else if matches!(chain, JovaChain::Solana) {
+            // ed25519: every 32-byte value is a valid secret (length already
+            // checked by parse_private_key_hex). SigningKey::from_bytes is
+            // infallible, so no scalar-range check is needed.
+            Ok(Self {
+                material: KeyMaterial::Ed25519 {
+                    key,
+                    chain: chain.clone(),
+                },
+            })
         } else {
-            // Solana / ed25519 — implemented in the next task.
             Err(JovaError::UnsupportedChain(format!(
-                "from_private_key not yet wired for {:?}",
+                "from_private_key unsupported chain {:?}",
                 chain
             )))
         }
@@ -132,6 +141,7 @@ impl JovaWallet {
     /// Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
     /// For Bitcoin, the PSBT carries its own input descriptors.
     pub fn sign_tx(&self, unsigned: &UnsignedTx) -> Result<SignedTx, JovaError> {
+        self.ensure_chain_allowed(&chain_of_unsigned_tx(unsigned))?;
         match unsigned {
             UnsignedTx::Evm(evm) => {
                 // Derive the canonical chain label from the chain ID in the tx.
@@ -141,21 +151,21 @@ impl JovaWallet {
                 let signer = EvmSigner {
                     chain_label: static_label,
                 };
-                let xprv = self.derive_path("m/44'/60'/0'/0/0")?;
+                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned))?;
                 let mut signed = signer.sign_tx(&xprv, unsigned)?;
                 signed.chain = chain_label;
                 Ok(signed)
             }
             UnsignedTx::Bitcoin { .. } => {
-                let xprv = self.derive_path("m/84'/0'/0'/0/0")?;
+                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned))?;
                 Ok(BtcSigner.sign_tx(&xprv, unsigned)?)
             }
             UnsignedTx::Xrp { .. } => {
-                let xprv = self.derive_path("m/44'/144'/0'/0/0")?;
+                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned))?;
                 Ok(XrpSigner.sign_tx(&xprv, unsigned)?)
             }
             UnsignedTx::Solana { .. } => {
-                let xprv = self.derive_ed25519_path("m/44'/501'/0'/0'/0'")?;
+                let xprv = self.derive_ed25519_for(&JovaChain::Solana)?;
                 Ok(SolSigner.sign_tx(&xprv, unsigned)?)
             }
         }
@@ -163,20 +173,21 @@ impl JovaWallet {
 
     /// Sign a message. Chain is implicit in the `SignableMessage` variant.
     pub fn sign_message(&self, msg: &SignableMessage) -> Result<Signature, JovaError> {
+        self.ensure_chain_allowed(&chain_of_signable_message(msg))?;
         match msg {
             SignableMessage::EvmPersonalSign { .. } | SignableMessage::EvmTypedDataV4 { .. } => {
                 let signer = EvmSigner {
                     chain_label: "ethereum",
                 };
-                let xprv = self.derive_path("m/44'/60'/0'/0/0")?;
+                let xprv = self.derive_for(&chain_of_signable_message(msg))?;
                 Ok(signer.sign_message(&xprv, msg)?)
             }
             SignableMessage::Bitcoin { .. } => {
-                let xprv = self.derive_path("m/84'/0'/0'/0/0")?;
+                let xprv = self.derive_for(&chain_of_signable_message(msg))?;
                 Ok(BtcSigner.sign_message(&xprv, msg)?)
             }
             SignableMessage::Solana { .. } => {
-                let xprv = self.derive_ed25519_path("m/44'/501'/0'/0'/0'")?;
+                let xprv = self.derive_ed25519_for(&JovaChain::Solana)?;
                 Ok(SolSigner.sign_message(&xprv, msg)?)
             }
         }
@@ -249,7 +260,16 @@ impl JovaWallet {
     }
 
     fn derive_ed25519_for(&self, chain: &JovaChain) -> Result<Ed25519Xprv, JovaError> {
-        self.derive_ed25519_path(chain.derivation_path())
+        match &self.material {
+            KeyMaterial::Ed25519 { key, .. } => Ok(
+                Ed25519Xprv::from_raw_secret_and_chain_code(*key, [0u8; 32]),
+            ),
+            KeyMaterial::Secp256k1 { .. } => Err(JovaError::UnsupportedChain(format!(
+                "secp256k1 key cannot derive ed25519 chain {:?}",
+                chain
+            ))),
+            KeyMaterial::Seed(_) => self.derive_ed25519_path(chain.derivation_path()),
+        }
     }
 
     /// SLIP-10 ed25519 derivation. The `DerivationPath::parse` helper applies
@@ -314,6 +334,35 @@ fn parse_private_key_hex(hex_str: &str) -> Result<[u8; 32], JovaError> {
         reason: "expected_32_bytes".into(),
     })?;
     Ok(arr)
+}
+
+/// The chain a given unsigned tx targets (used for key-material scoping).
+fn chain_of_unsigned_tx(tx: &UnsignedTx) -> JovaChain {
+    match tx {
+        UnsignedTx::Evm(evm) => match evm.chain_id {
+            1 => JovaChain::Ethereum,
+            137 => JovaChain::Polygon,
+            56 => JovaChain::Bsc,
+            42161 => JovaChain::Arbitrum,
+            10 => JovaChain::Optimism,
+            8453 => JovaChain::Base,
+            other => JovaChain::CustomEvm { chain_id: other },
+        },
+        UnsignedTx::Bitcoin { .. } => JovaChain::Bitcoin,
+        UnsignedTx::Xrp { .. } => JovaChain::Xrp,
+        UnsignedTx::Solana { .. } => JovaChain::Solana,
+    }
+}
+
+/// The chain a given signable message targets (used for key-material scoping).
+fn chain_of_signable_message(msg: &SignableMessage) -> JovaChain {
+    match msg {
+        SignableMessage::EvmPersonalSign { .. } | SignableMessage::EvmTypedDataV4 { .. } => {
+            JovaChain::Ethereum
+        }
+        SignableMessage::Bitcoin { .. } => JovaChain::Bitcoin,
+        SignableMessage::Solana { .. } => JovaChain::Solana,
+    }
 }
 
 /// Return `true` if `addr` is a valid address for `chain`.

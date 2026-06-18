@@ -147,3 +147,112 @@ fn from_private_key_xrp_derives_valid_address() {
         "XRP address from imported EIP-155 key must match pinned snapshot"
     );
 }
+
+// ── Solana (ed25519) ──────────────────────────────────────────────────────
+
+/// 32-byte ed25519 secret scalar of all 0x01. Its base58 Solana address is
+/// deterministic; we assert via round-trip (validate_sol_address) rather than
+/// hardcoding, then lock the exact value once observed.
+const ED25519_KEY: &str =
+    "0101010101010101010101010101010101010101010101010101010101010101";
+
+#[test]
+fn from_private_key_solana_derives_valid_address() {
+    let wallet = JovaWallet::from_private_key(ED25519_KEY, &JovaChain::Solana)
+        .expect("valid ed25519 key");
+    let addr = wallet.address(&JovaChain::Solana, 0).expect("derive");
+    assert!(
+        jova_core::is_valid_address(&addr.value, &JovaChain::Solana),
+        "derived Solana address must validate: {}",
+        addr.value
+    );
+    // Lock the deterministic value (base58 of ed25519 pubkey for 0x01*32).
+    // Observed from SDK's derive_sol_address output; authoritative per Step 6.
+    assert_eq!(
+        addr.value, "AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9",
+        "Solana address for the all-0x01 ed25519 secret"
+    );
+}
+
+#[test]
+fn from_private_key_solana_accepts_any_32_bytes() {
+    // ed25519 has no scalar-range restriction; the zero secret is valid.
+    let zero = "00".repeat(32);
+    assert!(JovaWallet::from_private_key(&zero, &JovaChain::Solana).is_ok());
+}
+
+#[test]
+fn from_private_key_solana_rejects_wrong_length() {
+    let short = "01".repeat(31);
+    let err = JovaWallet::from_private_key(&short, &JovaChain::Solana).unwrap_err();
+    assert!(matches!(err, JovaError::InvalidPrivateKey { .. }), "got {err:?}");
+}
+
+#[test]
+fn secp_key_cannot_sign_solana_and_vice_versa() {
+    use jova_core::{SignableMessage, UnsignedTx};
+    // An EVM-bound key signing a Solana tx must be UnsupportedChain.
+    let evm_wallet = JovaWallet::from_private_key(EIP155_KEY, &JovaChain::Ethereum)
+        .expect("valid key");
+    let sol_tx = UnsignedTx::Solana {
+        message_base64: "AA==".into(),
+        recent_blockhash: "11111111111111111111111111111111".into(),
+    };
+    let err = evm_wallet.sign_tx(&sol_tx).unwrap_err();
+    assert!(
+        matches!(err, JovaError::UnsupportedChain(_)),
+        "evm key signing solana tx must be UnsupportedChain, got {err:?}"
+    );
+
+    // A Solana-bound key signing an EVM message must be UnsupportedChain.
+    let sol_wallet = JovaWallet::from_private_key(ED25519_KEY, &JovaChain::Solana)
+        .expect("valid key");
+    let evm_msg = SignableMessage::EvmPersonalSign { message: "hi".into() };
+    let err2 = sol_wallet.sign_message(&evm_msg).unwrap_err();
+    assert!(
+        matches!(err2, JovaError::UnsupportedChain(_)),
+        "solana key signing evm message must be UnsupportedChain, got {err2:?}"
+    );
+}
+
+// ── Positive same-chain signing tests ────────────────────────────────────
+
+#[test]
+fn imported_evm_key_can_sign_evm_tx() {
+    use jova_core::{EvmUnsigned, UnsignedTx};
+    let wallet = JovaWallet::from_private_key(EIP155_KEY, &JovaChain::Ethereum)
+        .expect("valid key");
+    let unsigned = UnsignedTx::Evm(EvmUnsigned {
+        chain_id: 1,
+        nonce: 0,
+        to: "0x9d8A62f656a8d1615C1294fd71e9CFb3E4855A4F".into(),
+        value: "0".into(),
+        gas_limit: 21000,
+        max_fee_per_gas: "1000000000".into(),
+        max_priority_fee_per_gas: "1000000000".into(),
+        data: "0x".into(),
+        access_list: vec![],
+    });
+    let signed = wallet.sign_tx(&unsigned).expect("imported EVM key must sign its own chain");
+    assert!(
+        signed.raw_hex.starts_with("0x"),
+        "signed EVM tx raw_hex must be 0x-prefixed, got: {}",
+        signed.raw_hex
+    );
+    assert!(!signed.raw_hex.is_empty(), "signed EVM tx raw_hex must be non-empty");
+}
+
+#[test]
+fn imported_solana_key_can_sign_solana_message() {
+    use jova_core::SignableMessage;
+    let wallet = JovaWallet::from_private_key(ED25519_KEY, &JovaChain::Solana)
+        .expect("valid key");
+    // Sign a trivial 1-byte payload (0x00) encoded as base64 "AA==".
+    let msg = SignableMessage::Solana { message_base64: "AA==".into() };
+    let signed = wallet.sign_message(&msg).expect("imported Solana key must sign its own chain");
+    // Signature should be a non-empty base58 string (64 bytes → ~88 base58 chars).
+    assert!(
+        !signed.hex.is_empty(),
+        "Solana signature must be non-empty"
+    );
+}
