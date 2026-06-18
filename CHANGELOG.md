@@ -34,6 +34,24 @@ The WASM binding (`crates/jova-core-wasm`) now exposes the full `JovaWallet` sig
 
 No SDK API change; no version bump in this section (v1.1.0 ships at Phase 6 final tag after Phase 5 closes).
 
+## [0.4.0] — 2026-06-18
+
+### Added (Track 0 — private-key import)
+- **`JovaWallet::from_private_key(hex: &str, chain: &JovaChain)`** in `jova-core` — single-chain wallet from a raw 32-byte private key (optional `0x` prefix). Curve selected by chain: secp256k1 for EVM family / Bitcoin / XRP, ed25519 for Solana. The wallet serves ONLY its bound chain; any other chain returns `UnsupportedChain`.
+- **`KeyMaterial` enum** behind `JovaWallet` (`Seed | Secp256k1{key,chain} | Ed25519{key,chain}`). Mnemonic / `from_seed_bytes` wallets are unchanged (`KeyMaterial::Seed`, byte-identical derivation). Imported keys wrap the raw scalar in `XPrv` / `Ed25519Xprv` with a zero chain code (leaf signing reads only the key bytes).
+- **`JovaError::InvalidPrivateKey { reason }`** + **`FfiError::InvalidPrivateKey { reason }`** — reasons: `not_hex`, `expected_32_bytes`, `secp256k1_scalar_out_of_range`.
+- **FFI constructor `JovaWallet.fromPrivateKey(hex:chain:)`** (uniffi `#[uniffi::constructor]`) surfaced in regenerated Swift + Kotlin bindings.
+- **New test vectors** in `spec/test-vectors.json` (`version` `0.6` → `0.7`): `private_key_address` (Ethereum/Bitcoin/XRP/Solana) and `private_key_sign_tx` (Ethereum EIP-1559 transfer).
+- **New Rust tests:** `crates/jova-core/tests/private_key.rs` (happy paths + bad hex / wrong length / zero scalar / cross-curve / unbound-chain negatives), `crates/jova-core/tests/vectors_private_key.rs` (vector runner), `crates/jova-core-ffi/tests/ffi_private_key.rs` (FFI smoke).
+
+### Changed
+- `JovaWallet` struct field `seed: Seed` → `material: KeyMaterial` (internal; no public-API removal).
+- `sign_tx` / `sign_message` now enforce key-material chain scoping before dispatch.
+
+### Notes
+- Internal Cargo crate `version` strings remain `0.0.1` (the published version is tracked by git tag + this CHANGELOG, consistent with prior releases). The 0.4.0 label is the SDK release tag and the version iOS pins to.
+- To cut the actual GitHub release after this branch merges: `git tag v0.4.0 && git push origin v0.4.0`. Then compute the XCFramework zip checksum with `swift package compute-checksum bindings/swift/JovaCoreFFI.xcframework.zip` and update `bindings/swift/Package.swift` to the published `url:` + `checksum:` form (see comment in that file).
+
 ## [0.3.0] — 2026-05-14
 
 ### Added (Phase 3 — Solana + XRP + remaining EVM chains)
