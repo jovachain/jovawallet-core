@@ -9,15 +9,28 @@ use jova_core_primitives::{
 use crate::chain::JovaChain;
 use crate::error::JovaError;
 
+/// What a `JovaWallet` derives from: either a full BIP-39 seed (HD wallet)
+/// or a single imported leaf private key bound to one chain.
+enum KeyMaterial {
+    /// HD wallet: per-chain keys are BIP-32 / SLIP-10 derived from this seed.
+    Seed(Seed),
+    /// Imported secp256k1 leaf key (EVM family, Bitcoin, or XRP). Serves only `chain`.
+    Secp256k1 { key: [u8; 32], chain: JovaChain },
+    /// Imported ed25519 leaf key (Solana). Serves only `chain`.
+    Ed25519 { key: [u8; 32], chain: JovaChain },
+}
+
 pub struct JovaWallet {
-    seed: Seed,
+    material: KeyMaterial,
 }
 
 impl JovaWallet {
     /// Create a wallet from a mnemonic phrase and optional passphrase.
     pub fn from_mnemonic(words: &str, passphrase: &str) -> Result<Self, JovaError> {
         let seed = Mnemonic::to_seed(words, passphrase)?;
-        Ok(Self { seed })
+        Ok(Self {
+            material: KeyMaterial::Seed(seed),
+        })
     }
 
     /// Create a wallet directly from a 64-byte BIP-39 seed.
@@ -32,7 +45,7 @@ impl JovaWallet {
     #[cfg(feature = "external-rng")]
     pub fn from_seed_bytes(bytes: [u8; 64]) -> Self {
         Self {
-            seed: Seed::from_external_bytes(bytes),
+            material: KeyMaterial::Seed(Seed::from_external_bytes(bytes)),
         }
     }
 
@@ -135,10 +148,18 @@ impl JovaWallet {
     }
 
     fn derive_path(&self, path_str: &str) -> Result<jova_core_primitives::XPrv, JovaError> {
+        let seed = match &self.material {
+            KeyMaterial::Seed(s) => s,
+            _ => {
+                return Err(JovaError::Internal {
+                    reason: "derive_path_called_on_key_material".into(),
+                });
+            }
+        };
         let path = DerivationPath::parse(path_str).map_err(|_| JovaError::Internal {
             reason: "bad_path".into(),
         })?;
-        derive_secp256k1(&self.seed, &path).map_err(|_| JovaError::Internal {
+        derive_secp256k1(seed, &path).map_err(|_| JovaError::Internal {
             reason: "derive_failed".into(),
         })
     }
@@ -153,10 +174,18 @@ impl JovaWallet {
     /// that and returns `HardenedRequired` otherwise. The canonical Solana
     /// path is `m/44'/501'/0'/0'/0'`.
     fn derive_ed25519_path(&self, path_str: &str) -> Result<Ed25519Xprv, JovaError> {
+        let seed = match &self.material {
+            KeyMaterial::Seed(s) => s,
+            _ => {
+                return Err(JovaError::Internal {
+                    reason: "derive_ed25519_path_called_on_key_material".into(),
+                });
+            }
+        };
         let path = DerivationPath::parse(path_str).map_err(|_| JovaError::Internal {
             reason: "bad_path".into(),
         })?;
-        derive_ed25519(&self.seed, &path.indices).map_err(|_| JovaError::Internal {
+        derive_ed25519(seed, &path.indices).map_err(|_| JovaError::Internal {
             reason: "derive_failed".into(),
         })
     }
