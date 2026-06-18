@@ -161,6 +161,7 @@ impl From<JovaError> for FfiError {
             }
             JovaError::SigningFailed { reason } => Self::SigningFailed { reason },
             JovaError::Internal { reason } => Self::Internal { reason },
+            JovaError::InvalidPrivateKey { reason } => Self::Internal { reason },
         }
     }
 }

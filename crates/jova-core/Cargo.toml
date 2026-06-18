@@ -16,7 +16,7 @@ description = "Public Rust API for jovawallet-core"
 # avoid the C secp256k1-sys build step; the functional WASM signing surface
 # lands in Phase 6 once we have a wasm-compatible secp256k1 path.
 default = ["chains"]
-chains = ["dep:jova-core-chains", "dep:serde", "dep:serde_json", "dep:thiserror"]
+chains = ["dep:jova-core-chains", "dep:serde", "dep:serde_json", "dep:thiserror", "dep:hex", "dep:secp256k1"]
 # Phase 7: forwards the primitives crate's `external-rng` feature so firmware
 # consumers can call `Mnemonic::generate_with` and `JovaWallet::from_seed_bytes`.
 external-rng = ["jova-core-primitives/external-rng"]
@@ -27,6 +27,8 @@ jova-core-chains = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 thiserror = { workspace = true, optional = true }
+hex = { workspace = true, optional = true }
+secp256k1 = { workspace = true, optional = true }
 
 [dev-dependencies]
 hex.workspace = true

@@ -24,6 +24,17 @@ pub struct JovaWallet {
     material: KeyMaterial,
 }
 
+impl core::fmt::Debug for JovaWallet {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let kind = match &self.material {
+            KeyMaterial::Seed(_) => "Seed",
+            KeyMaterial::Secp256k1 { .. } => "Secp256k1",
+            KeyMaterial::Ed25519 { .. } => "Ed25519",
+        };
+        write!(f, "JovaWallet(<{kind}, redacted>)")
+    }
+}
+
 impl JovaWallet {
     /// Create a wallet from a mnemonic phrase and optional passphrase.
     pub fn from_mnemonic(words: &str, passphrase: &str) -> Result<Self, JovaError> {
@@ -31,6 +42,42 @@ impl JovaWallet {
         Ok(Self {
             material: KeyMaterial::Seed(seed),
         })
+    }
+
+    /// Create a single-chain wallet from a raw 32-byte private key (hex).
+    ///
+    /// Accepts an optional `0x` prefix. The curve is chosen by `chain`:
+    /// EVM family / Bitcoin / XRP use secp256k1; Solana uses ed25519. The
+    /// resulting wallet serves ONLY `chain` — any other chain returns
+    /// `UnsupportedChain`.
+    pub fn from_private_key(hex: &str, chain: &JovaChain) -> Result<Self, JovaError> {
+        let key = parse_private_key_hex(hex)?;
+        // ed25519 chains (Solana) handled in a later task; for now route
+        // every non-secp chain through the secp branch via evm_chain_id/btc/xrp.
+        let is_secp = matches!(
+            chain,
+            JovaChain::Bitcoin | JovaChain::Xrp
+        ) || chain.evm_chain_id().is_some();
+        if is_secp {
+            // Reject scalars outside the secp256k1 group order (and zero).
+            secp256k1::SecretKey::from_byte_array(key).map_err(|_| {
+                JovaError::InvalidPrivateKey {
+                    reason: "secp256k1_scalar_out_of_range".into(),
+                }
+            })?;
+            Ok(Self {
+                material: KeyMaterial::Secp256k1 {
+                    key,
+                    chain: chain.clone(),
+                },
+            })
+        } else {
+            // Solana / ed25519 — implemented in the next task.
+            Err(JovaError::UnsupportedChain(format!(
+                "from_private_key not yet wired for {:?}",
+                chain
+            )))
+        }
     }
 
     /// Create a wallet directly from a 64-byte BIP-39 seed.
@@ -56,6 +103,7 @@ impl JovaWallet {
     /// the m/44'/60'/0'/0/0 path, and Bitcoin uses the BIP-84
     /// m/84'/0'/0'/0/0 path.
     pub fn address(&self, chain: &JovaChain, _account: u32) -> Result<Address, JovaError> {
+        self.ensure_chain_allowed(chain)?;
         match chain {
             JovaChain::Bitcoin => {
                 let xprv = self.derive_for(chain)?;
@@ -134,6 +182,29 @@ impl JovaWallet {
         }
     }
 
+    /// For a key-material wallet, the single chain it is bound to.
+    /// `Seed` wallets return `None` (they serve every chain).
+    fn bound_chain(&self) -> Option<&JovaChain> {
+        match &self.material {
+            KeyMaterial::Seed(_) => None,
+            KeyMaterial::Secp256k1 { chain, .. } | KeyMaterial::Ed25519 { chain, .. } => Some(chain),
+        }
+    }
+
+    /// Reject any operation on a chain the imported key is not bound to.
+    /// No-op for `Seed` wallets.
+    fn ensure_chain_allowed(&self, requested: &JovaChain) -> Result<(), JovaError> {
+        if let Some(bound) = self.bound_chain() {
+            if bound != requested {
+                return Err(JovaError::UnsupportedChain(format!(
+                    "wallet bound to {:?}, requested {:?}",
+                    bound, requested
+                )));
+            }
+        }
+        Ok(())
+    }
+
     fn evm_signer(&self, chain: &JovaChain) -> Result<EvmSigner, JovaError> {
         if chain.evm_chain_id().is_none() {
             return Err(JovaError::UnsupportedChain(format!("{:?}", chain)));
@@ -144,7 +215,20 @@ impl JovaWallet {
     }
 
     fn derive_for(&self, chain: &JovaChain) -> Result<jova_core_primitives::XPrv, JovaError> {
-        self.derive_path(chain.derivation_path())
+        match &self.material {
+            // Imported secp256k1 leaf key: wrap raw bytes in an XPrv. The chain
+            // code is irrelevant for leaf signing — the secp256k1 signers read
+            // only private_key_bytes()/public_key_*(). Strict scoping already
+            // enforced by ensure_chain_allowed at the public entry points.
+            KeyMaterial::Secp256k1 { key, .. } => Ok(
+                jova_core_primitives::XPrv::from_raw_key_and_chain_code(*key, [0u8; 32]),
+            ),
+            KeyMaterial::Ed25519 { .. } => Err(JovaError::UnsupportedChain(format!(
+                "ed25519 key cannot derive secp256k1 chain {:?}",
+                chain
+            ))),
+            KeyMaterial::Seed(_) => self.derive_path(chain.derivation_path()),
+        }
     }
 
     fn derive_path(&self, path_str: &str) -> Result<jova_core_primitives::XPrv, JovaError> {
@@ -217,6 +301,19 @@ fn static_chain_label(id: u64) -> &'static str {
         8453 => "base",
         _ => "customEvm",
     }
+}
+
+/// Parse a private-key hex string (optional `0x` prefix) into 32 bytes.
+fn parse_private_key_hex(hex_str: &str) -> Result<[u8; 32], JovaError> {
+    let trimmed = hex_str.trim();
+    let body = trimmed.strip_prefix("0x").unwrap_or(trimmed);
+    let bytes = hex::decode(body).map_err(|_| JovaError::InvalidPrivateKey {
+        reason: "not_hex".into(),
+    })?;
+    let arr: [u8; 32] = bytes.try_into().map_err(|_| JovaError::InvalidPrivateKey {
+        reason: "expected_32_bytes".into(),
+    })?;
+    Ok(arr)
 }
 
 /// Return `true` if `addr` is a valid address for `chain`.

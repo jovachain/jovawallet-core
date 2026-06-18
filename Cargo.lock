@@ -3118,6 +3118,7 @@ dependencies = [
  "jova-core-chains",
  "jova-core-primitives",
  "proptest",
+ "secp256k1 0.31.1",
  "serde",
  "serde_json",
  "thiserror 2.0.18",

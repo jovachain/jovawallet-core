@@ -18,6 +18,8 @@ pub enum JovaError {
     SigningFailed { reason: String },
     #[error("internal: {reason}")]
     Internal { reason: String },
+    #[error("invalid private key: {reason}")]
+    InvalidPrivateKey { reason: String },
 }
 
 impl From<jova_core_primitives::MnemonicError> for JovaError {

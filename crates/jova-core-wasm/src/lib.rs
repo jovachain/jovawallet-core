@@ -240,6 +240,11 @@ fn jova_err(e: JovaError) -> JsValue {
             reason: Some(reason.clone()),
             chain: None,
         },
+        JovaError::InvalidPrivateKey { reason } => JsErrorPayload {
+            kind: "invalidPrivateKey",
+            reason: Some(reason.clone()),
+            chain: None,
+        },
     };
     swb::to_value(&payload).unwrap_or_else(|_| JsValue::from_str(&e.to_string()))
 }
