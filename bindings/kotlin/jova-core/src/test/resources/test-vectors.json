@@ -1,5 +1,5 @@
 {
-  "version": "0.6",
+  "version": "0.7",
   "vectors": [
     {
       "id": "phase0.mnemonic_validation_neg.gibberish",
@@ -950,6 +950,89 @@
       "source": "Phase 3c error-path definition — sign_sol_message rejects non-base64 payloads",
       "source_url": "spec/errors.md#phase-3--sol-malformed_signable_message-reasons",
       "capture_cmd": "n/a"
+    },
+
+    {
+      "id": "phase4.private_key_address.eip155.ethereum",
+      "kind": "private_key_address",
+      "input": {
+        "private_key": "4646464646464646464646464646464646464646464646464646464646464646",
+        "chain": { "kind": "ethereum" }
+      },
+      "expected": {
+        "address": "0x9d8A62f656a8d1615C1294fd71e9CFb3E4855A4F"
+      },
+      "source": "EIP-155 example private key; address via JovaWallet::from_private_key",
+      "source_url": "https://eips.ethereum.org/EIPS/eip-155"
+    },
+
+    {
+      "id": "phase4.private_key_address.eip155.bitcoin",
+      "kind": "private_key_address",
+      "input": {
+        "private_key": "4646464646464646464646464646464646464646464646464646464646464646",
+        "chain": { "kind": "bitcoin" }
+      },
+      "expected": {
+        "address": "bc1qhkfq3zahaqkkzx5mjnamwjsfpq2jk7z00ppggv"
+      },
+      "source": "JovaWallet::from_private_key BIP-84 P2WPKH of the EIP-155 key; captured via SDK pinned snapshot in crates/jova-core/tests/private_key.rs",
+      "source_url": "internal-sdk-capture"
+    },
+
+    {
+      "id": "phase4.private_key_address.eip155.xrp",
+      "kind": "private_key_address",
+      "input": {
+        "private_key": "4646464646464646464646464646464646464646464646464646464646464646",
+        "chain": { "kind": "xrp" }
+      },
+      "expected": {
+        "address": "rJHMeqKu8Ep7Fazx8MQG6JunaafBXz93YQ"
+      },
+      "source": "JovaWallet::from_private_key XRPL classic address of the EIP-155 key; captured via SDK pinned snapshot in crates/jova-core/tests/private_key.rs",
+      "source_url": "internal-sdk-capture"
+    },
+
+    {
+      "id": "phase4.private_key_address.ed01.solana",
+      "kind": "private_key_address",
+      "input": {
+        "private_key": "0101010101010101010101010101010101010101010101010101010101010101",
+        "chain": { "kind": "solana" }
+      },
+      "expected": {
+        "address": "AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9"
+      },
+      "source": "JovaWallet::from_private_key ed25519 base58 pubkey of the all-0x01 secret; locked in crates/jova-core/tests/private_key.rs Task 3 Step 6",
+      "source_url": "internal-sdk-capture"
+    },
+
+    {
+      "id": "phase4.private_key_sign_tx.eip155.eth_transfer",
+      "kind": "private_key_sign_tx",
+      "input": {
+        "private_key": "4646464646464646464646464646464646464646464646464646464646464646",
+        "chain": { "kind": "ethereum" },
+        "unsigned_tx": {
+          "kind": "evm",
+          "chainId": 1,
+          "nonce": 0,
+          "to": "0x3535353535353535353535353535353535353535",
+          "value": "1000000000000000000",
+          "gasLimit": 21000,
+          "maxFeePerGas": "20000000000",
+          "maxPriorityFeePerGas": "1000000000",
+          "data": "0x",
+          "accessList": []
+        }
+      },
+      "expected": {
+        "signed_hex": "0x02f8730180843b9aca008504a817c800825208943535353535353535353535353535353535353535880de0b6b3a764000080c001a0b3d7e5d4775918a0ec38e4f9da6263f69c2072c0e177ff9aa274575bfba17d04a062182875ae92e4de08aaf8ea1a43d3ea0d836745788801cdc79ccc473a76dfd9",
+        "tx_hash": "0xfa109002a68309c6973db528fd253fc26fa067234090c821d0664d30d281fd22"
+      },
+      "source": "JovaWallet::from_private_key + sign_tx EIP-1559 transfer with the EIP-155 key; captured via cargo test -p jova-core --test capture_sign -- --nocapture",
+      "source_url": "internal-sdk-capture"
     }
   ]
 }

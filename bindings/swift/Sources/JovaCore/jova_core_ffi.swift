@@ -597,6 +597,19 @@ public static func fromMnemonic(words: String, passphrase: String)throws  -> Jov
 })
 }
     
+    /**
+     * Create a single-chain wallet from a raw private key (hex; optional 0x).
+     * Curve is chosen by `chain` (secp256k1 for EVM/BTC/XRP, ed25519 for Solana).
+     */
+public static func fromPrivateKey(hex: String, chain: JovaChain)throws  -> JovaWallet  {
+    return try  FfiConverterTypeJovaWallet_lift(try rustCallWithError(FfiConverterTypeFfiError_lift) {
+    uniffi_jova_core_ffi_fn_constructor_jovawallet_from_private_key(
+        FfiConverterString.lower(hex),
+        FfiConverterTypeJovaChain_lower(chain),$0
+    )
+})
+}
+    
 
     
     /**
@@ -1069,6 +1082,8 @@ public enum FfiError: Swift.Error, Equatable, Hashable, Foundation.LocalizedErro
     
     case Internal(message: String)
     
+    case InvalidPrivateKey(message: String)
+    
 
     
 
@@ -1130,6 +1145,10 @@ public struct FfiConverterTypeFfiError: FfiConverterRustBuffer {
             message: try FfiConverterString.read(from: &buf)
         )
         
+        case 9: return .InvalidPrivateKey(
+            message: try FfiConverterString.read(from: &buf)
+        )
+        
 
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -1157,6 +1176,8 @@ public struct FfiConverterTypeFfiError: FfiConverterRustBuffer {
             writeInt(&buf, Int32(7))
         case .Internal(_ /* message is ignored*/):
             writeInt(&buf, Int32(8))
+        case .InvalidPrivateKey(_ /* message is ignored*/):
+            writeInt(&buf, Int32(9))
 
         
         }
@@ -1620,6 +1641,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_mnemonic() != 26437) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_private_key() != 6526) {
         return InitializationResult.apiChecksumMismatch
     }
 

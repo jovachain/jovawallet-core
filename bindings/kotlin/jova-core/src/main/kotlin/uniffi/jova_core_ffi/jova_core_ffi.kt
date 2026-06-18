@@ -650,6 +650,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Short
     external fun uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_mnemonic(
     ): Short
+    external fun uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_private_key(
+    ): Short
     external fun ffi_jova_core_ffi_uniffi_contract_version(
     ): Int
 
@@ -673,6 +675,8 @@ internal object UniffiLib {
     external fun uniffi_jova_core_ffi_fn_free_jovawallet(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_jova_core_ffi_fn_constructor_jovawallet_from_mnemonic(`words`: RustBuffer.ByValue,`passphrase`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Long
+    external fun uniffi_jova_core_ffi_fn_constructor_jovawallet_from_private_key(`hex`: RustBuffer.ByValue,`chain`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Long
     external fun uniffi_jova_core_ffi_fn_method_jovawallet_address(`ptr`: Long,`chain`: RustBuffer.ByValue,`account`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -824,6 +828,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_mnemonic() != 26437.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_private_key() != 6526.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1395,6 +1402,22 @@ open class JovaWallet: Disposable, AutoCloseable, JovaWalletInterface
     
 
         
+    /**
+     * Create a single-chain wallet from a raw private key (hex; optional 0x).
+     * Curve is chosen by `chain` (secp256k1 for EVM/BTC/XRP, ed25519 for Solana).
+     */
+    @Throws(FfiException::class) fun `fromPrivateKey`(`hex`: kotlin.String, `chain`: JovaChain): JovaWallet {
+            return FfiConverterTypeJovaWallet.lift(
+    uniffiRustCallWithError(FfiException) { _status ->
+    UniffiLib.uniffi_jova_core_ffi_fn_constructor_jovawallet_from_private_key(
+    
+        FfiConverterString.lower(`hex`),FfiConverterTypeJovaChain.lower(`chain`),_status)
+}
+    )
+    }
+    
+
+        
     }
     
 }
@@ -1704,6 +1727,8 @@ sealed class FfiException(message: String): kotlin.Exception(message) {
         
         class Internal(message: String) : FfiException(message)
         
+        class InvalidPrivateKey(message: String) : FfiException(message)
+        
 
     companion object ErrorHandler : UniffiRustCallStatusErrorHandler<FfiException> {
         override fun lift(error_buf: RustBuffer.ByValue): FfiException = FfiConverterTypeFfiError.lift(error_buf)
@@ -1725,6 +1750,7 @@ public object FfiConverterTypeFfiError : FfiConverterRustBuffer<FfiException> {
             6 -> FfiException.MalformedSignableMessage(FfiConverterString.read(buf))
             7 -> FfiException.SigningFailed(FfiConverterString.read(buf))
             8 -> FfiException.Internal(FfiConverterString.read(buf))
+            9 -> FfiException.InvalidPrivateKey(FfiConverterString.read(buf))
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
         
@@ -1766,6 +1792,10 @@ public object FfiConverterTypeFfiError : FfiConverterRustBuffer<FfiException> {
             }
             is FfiException.Internal -> {
                 buf.putInt(8)
+                Unit
+            }
+            is FfiException.InvalidPrivateKey -> {
+                buf.putInt(9)
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
