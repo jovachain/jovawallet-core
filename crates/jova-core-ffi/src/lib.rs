@@ -140,6 +140,8 @@ pub enum FfiError {
     SigningFailed { reason: String },
     #[error("internal: {reason}")]
     Internal { reason: String },
+    #[error("invalid private key: {reason}")]
+    InvalidPrivateKey { reason: String },
 }
 
 // ---------- Conversions: JovaError → FfiError ----------
@@ -161,8 +163,7 @@ impl From<JovaError> for FfiError {
             }
             JovaError::SigningFailed { reason } => Self::SigningFailed { reason },
             JovaError::Internal { reason } => Self::Internal { reason },
-            // TODO(Task 5): expose as FfiError::InvalidPrivateKey once the FFI constructor lands
-            JovaError::InvalidPrivateKey { reason } => Self::Internal { reason },
+            JovaError::InvalidPrivateKey { reason } => Self::InvalidPrivateKey { reason },
         }
     }
 }
@@ -319,7 +320,7 @@ pub fn is_valid_address(addr: String, chain: JovaChain) -> bool {
 
 // ---------- Wallet object ----------
 
-#[derive(uniffi::Object)]
+#[derive(uniffi::Object, Debug)]
 pub struct JovaWallet {
     inner: InnerWallet,
 }
@@ -330,6 +331,15 @@ impl JovaWallet {
     #[uniffi::constructor]
     pub fn from_mnemonic(words: String, passphrase: String) -> Result<Arc<Self>, FfiError> {
         let inner = InnerWallet::from_mnemonic(&words, &passphrase).map_err(FfiError::from)?;
+        Ok(Arc::new(Self { inner }))
+    }
+
+    /// Create a single-chain wallet from a raw private key (hex; optional 0x).
+    /// Curve is chosen by `chain` (secp256k1 for EVM/BTC/XRP, ed25519 for Solana).
+    #[uniffi::constructor]
+    pub fn from_private_key(hex: String, chain: JovaChain) -> Result<Arc<Self>, FfiError> {
+        let core_chain = ffi_chain_to_core(&chain)?;
+        let inner = InnerWallet::from_private_key(&hex, &core_chain).map_err(FfiError::from)?;
         Ok(Arc::new(Self { inner }))
     }
 
