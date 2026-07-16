@@ -35,3 +35,12 @@ zeroize.workspace = true
 hex.workspace = true
 serde_json.workspace = true
 proptest.workspace = true
+# Independent verifiers for the multi-account key/address parity test
+# (tests/multi_account.rs). All are already in the build graph via
+# jova-core-chains + Cargo.lock, so they add no meaningful compile cost.
+alloy = { workspace = true }                       # EVM ecrecover (k256 via signer-local)
+ed25519-dalek = { workspace = true }              # Solana sig verify
+sha2 = { workspace = true }                        # XRP account-id + checksum
+ripemd = { workspace = true }                      # XRP account-id
+bs58 = "0.5.1"                                     # base58 (Solana pubkey, XRP address)
+base64 = "0.22.1"                                  # Solana message payload encoding

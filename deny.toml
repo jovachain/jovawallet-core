@@ -9,8 +9,11 @@ ignore  = [
     # Both crates are flagged "unmaintained" but have no security CVE and no safe
     # upgrade available. Pulled in transitively via alloy-sol-types. Revisit if
     # alloy migrates off them or if a real vulnerability is filed.
-    "RUSTSEC-2024-0388",  # derivative — unmaintained
-    "RUSTSEC-2024-0436",  # paste      — unmaintained
+    "RUSTSEC-2024-0388",  # derivative        — unmaintained
+    "RUSTSEC-2024-0436",  # paste             — unmaintained
+    "RUSTSEC-2026-0173",  # proc-macro-error2 — unmaintained (build-time only,
+                          # pulled via alloy-sol-macro / alloy-sol-types). No CVE;
+                          # not in the runtime artifact. Revisit if alloy migrates.
     # bincode 1.3.3 — pulled in transitively by Solana Anza split crates for
     # VersionedTransaction wire serialization. The advisory is unmaintained-status
     # only (maintainer team disbanded after a harassment incident); no CVE, no

@@ -8,7 +8,7 @@ The single signing SDK for the Jova wallet ecosystem. A pure-Rust core wrapped w
 
 - Generate / import / validate BIP-39 mnemonics
 - Derive addresses (BTC, SOL, EVM family, XRP, custom Jova chain)
-- Sign transactions and messages on every supported chain
+- Sign transactions and messages on every supported chain, from any HD account index — `address`, `signTx`, and `signMessage` all take an `account` parameter and derive the same key for a given `(chain, account)` (EVM follows MetaMask's `m/44'/60'/0'/0/N`)
 - Run identically on every Jova platform — drift is detected by shared vectors at the binding boundary and prevented from merging
 
 ## What it doesn't do

@@ -105,7 +105,7 @@ impl JovaWallet {
     }
 
     #[wasm_bindgen(js_name = signTx)]
-    pub fn sign_tx(&self, unsigned_js: JsValue) -> Result<JsValue, JsValue> {
+    pub fn sign_tx(&self, unsigned_js: JsValue, account: u32) -> Result<JsValue, JsValue> {
         let inner = self
             .inner
             .as_ref()
@@ -123,12 +123,12 @@ impl JovaWallet {
             }
             _ => {}
         }
-        let signed: SignedTx = inner.sign_tx(&unsigned).map_err(jova_err)?;
+        let signed: SignedTx = inner.sign_tx(&unsigned, account).map_err(jova_err)?;
         swb::to_value(&signed).map_err(jserr)
     }
 
     #[wasm_bindgen(js_name = signMessage)]
-    pub fn sign_message(&self, msg_js: JsValue) -> Result<JsValue, JsValue> {
+    pub fn sign_message(&self, msg_js: JsValue, account: u32) -> Result<JsValue, JsValue> {
         let inner = self
             .inner
             .as_ref()
@@ -139,7 +139,7 @@ impl JovaWallet {
                 "bitcoin",
             )));
         }
-        let sig: Signature = inner.sign_message(&msg).map_err(jova_err)?;
+        let sig: Signature = inner.sign_message(&msg, account).map_err(jova_err)?;
         swb::to_value(&sig).map_err(jserr)
     }
 }

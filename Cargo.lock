@@ -3114,13 +3114,19 @@ dependencies = [
 name = "jova-core"
 version = "0.0.1"
 dependencies = [
+ "alloy",
+ "base64",
+ "bs58",
+ "ed25519-dalek",
  "hex",
  "jova-core-chains",
  "jova-core-primitives",
  "proptest",
+ "ripemd",
  "secp256k1 0.31.1",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror 2.0.18",
  "zeroize",
 ]

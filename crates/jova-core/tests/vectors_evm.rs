@@ -91,7 +91,7 @@ fn evm_sign_tx_vectors() {
         let wallet = JovaWallet::from_mnemonic(mnemonic, passphrase)
             .unwrap_or_else(|e| panic!("vector {id}: from_mnemonic failed: {e}"));
         let signed = wallet
-            .sign_tx(&unsigned)
+            .sign_tx(&unsigned, 0)
             .unwrap_or_else(|e| panic!("vector {id}: sign_tx() failed: {e}"));
 
         assert_eq!(
@@ -136,7 +136,7 @@ fn evm_sign_message_vectors() {
         let wallet = JovaWallet::from_mnemonic(mnemonic, passphrase)
             .unwrap_or_else(|e| panic!("vector {id}: from_mnemonic failed: {e}"));
         let got = wallet
-            .sign_message(&msg)
+            .sign_message(&msg, 0)
             .unwrap_or_else(|e| panic!("vector {id}: sign_message() failed: {e}"));
 
         assert_eq!(
@@ -185,7 +185,7 @@ fn evm_error_vectors() {
         let unsigned: UnsignedTx = serde_json::from_value(v["input"]["unsigned_tx"].clone())
             .unwrap_or_else(|e| panic!("vector {id}: deserialise unsigned_tx: {e}"));
 
-        let result = wallet.sign_tx(&unsigned);
+        let result = wallet.sign_tx(&unsigned, 0);
         match result {
             Ok(_) => {
                 panic!("vector {id}: expected error {expected_variant}/{expected_reason}, got Ok")

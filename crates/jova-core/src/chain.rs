@@ -44,14 +44,24 @@ impl JovaChain {
         }
     }
 
-    pub(crate) fn derivation_path(&self) -> &'static str {
+    /// The BIP-32 / SLIP-10 derivation path for this chain at HD account
+    /// index `account`.
+    ///
+    /// **Scheme:** `account` increments the BIP-44/84 `address_index` (the
+    /// last path component) for the secp256k1 chains — identical to
+    /// MetaMask's `m/44'/60'/0'/0/N`. Solana is the exception: SLIP-10
+    /// ed25519 requires every component to be hardened, so `account`
+    /// increments the hardened `account'` level (`m/44'/501'/N'/0'/0'`).
+    /// `account = 0` reproduces the exact v0.4.0 paths byte-for-byte.
+    pub(crate) fn derivation_path(&self, account: u32) -> String {
         match self {
-            Self::Bitcoin => "m/84'/0'/0'/0/0",
-            Self::Xrp => "m/44'/144'/0'/0/0",
-            // Phantom/Solflare convention; SLIP-10 ed25519 requires all-hardened.
-            Self::Solana => "m/44'/501'/0'/0'/0'",
-            // All EVM chains share m/44'/60'/0'/0/0 in v1; account index applied separately.
-            _ => "m/44'/60'/0'/0/0",
+            Self::Bitcoin => format!("m/84'/0'/0'/0/{account}"),
+            Self::Xrp => format!("m/44'/144'/0'/0/{account}"),
+            // SLIP-10 ed25519 requires all-hardened; increment the account'
+            // level. The trailing /0'/0' preserves the v0.4.0 account-0 path.
+            Self::Solana => format!("m/44'/501'/{account}'/0'/0'"),
+            // All EVM chains share m/44'/60'/0'/0/N (MetaMask address_index).
+            _ => format!("m/44'/60'/0'/0/{account}"),
         }
     }
 }

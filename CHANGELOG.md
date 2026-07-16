@@ -34,6 +34,23 @@ The WASM binding (`crates/jova-core-wasm`) now exposes the full `JovaWallet` sig
 
 No SDK API change; no version bump in this section (v1.1.0 ships at Phase 6 final tag after Phase 5 closes).
 
+## [0.5.0] — 2026-07-16
+
+### Added (Track 1 — HD account index on signing)
+- **`account: u32` parameter on `JovaWallet::sign_tx` and `sign_message`** — signing now derives from an arbitrary HD account, mirroring `address(chain, account)`. Previously both signers always used account 0. The FFI surface (`sign_tx`, `sign_message`) defaults `account = 0` (uniffi `#[uniffi::method(default(account = 0))]`), so existing single-account Kotlin/Swift callers are source-compatible; the WASM binding takes `account` as a required argument.
+- **Guaranteed key/address parity.** `address`, `sign_tx`, and `sign_message` now all obtain their key through the single shared derivation `JovaChain::derivation_path(account)` → `derive_for` / `derive_ed25519_for`. For any `(chain, account)` the signing key is byte-identical to the key behind `address(chain, account)`.
+- **New test `crates/jova-core/tests/multi_account.rs`** — proves, for accounts 0/1/2 on every chain family, that the signer recovered/extracted from a signature or signed tx equals `address(chain, account)` (EVM ecrecover, BTC address-binding guard, XRP `SigningPubKey` re-derivation, Solana ed25519 verify), and that the three accounts yield distinct addresses.
+
+### Derivation-path semantics (confirmed)
+- **EVM (all chains): `account` increments the BIP-44 `address_index` — `m/44'/60'/0'/0/N` — identical to MetaMask's default HD account scheme.** Wallet-import parity with MetaMask holds for account > 0.
+- **Bitcoin: `m/84'/0'/0'/0/N`** (BIP-84 native SegWit, address_index).
+- **XRP: `m/44'/144'/0'/0/N`** (address_index).
+- **Solana: `m/44'/501'/N'/0'/0'`** — the account is applied at the hardened `account'` level (SLIP-10 ed25519 requires all-hardened components, so the address_index scheme can't be used). This preserves the exact v0.4.0 account-0 path; note that for account > 0 the resulting key does **not** match Phantom/Solflare (which use the 4-level `m/44'/501'/N'/0'`) — a pre-existing 5-vs-4-level divergence that already applied at account 0.
+- **Imported single-key wallets (`from_private_key`)** hold one leaf key and cannot HD-derive, so `account` is ignored for them (both `address` and `sign_*` ignore it — parity preserved).
+
+### Compatibility
+- **Account 0 is byte-for-byte unchanged** — all existing `spec/test-vectors.json` vectors pass unmodified; no reference value was altered.
+
 ## [0.4.0] — 2026-06-18
 
 ### Added (Track 0 — private-key import)

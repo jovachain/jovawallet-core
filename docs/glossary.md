@@ -6,7 +6,7 @@ Terms used across the `jovawallet-core` documentation. If you find yourself conf
 
 **ABI (Application Binary Interface).** The contract between compiled artifacts. We use the term in two senses: the C ABI exposed by `jova-core-ffi` for foreign-language consumption, and the Android NDK ABIs (`arm64-v8a`, etc.) we cross-compile to.
 
-**Account index.** The integer in `m/44'/<coin>'/<account>'/...` that lets a user have multiple addresses on the same chain. v1 apps always use `0`. Reserved on the API for a future advanced-mode feature.
+**Account index.** The integer that selects one of a user's HD accounts (MetaMask-style multiple accounts from one mnemonic). Taken by `address`, `signTx`, and `signMessage`, which all derive the same key for a given `(chain, account)`. For the secp256k1 chains it increments the BIP-44/84 `address_index` (the last path component — e.g. EVM `m/44'/60'/0'/0/N`, matching MetaMask); for Solana it increments the hardened `account'` level (`m/44'/501'/N'/0'/0'`, required because SLIP-10 ed25519 is all-hardened). See `chains.md` for the exact per-chain paths. Single-account apps pass `0`.
 
 **ADR (Architecture Decision Record).** A short document capturing a load-bearing design choice. See `decisions.md`.
 

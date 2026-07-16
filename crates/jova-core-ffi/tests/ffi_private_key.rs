@@ -6,8 +6,8 @@ use jova_core_ffi::{FfiError, JovaChain, JovaWallet};
 #[test]
 fn ffi_from_private_key_evm_ok() {
     let key = "4646464646464646464646464646464646464646464646464646464646464646";
-    let wallet = JovaWallet::from_private_key(key.to_string(), JovaChain::Ethereum)
-        .expect("valid key");
+    let wallet =
+        JovaWallet::from_private_key(key.to_string(), JovaChain::Ethereum).expect("valid key");
     let addr = wallet.address(JovaChain::Ethereum, 0).expect("address");
     assert_eq!(
         addr.value.to_lowercase(),
@@ -17,8 +17,7 @@ fn ffi_from_private_key_evm_ok() {
 
 #[test]
 fn ffi_from_private_key_bad_hex_maps_to_invalid_private_key() {
-    let err = JovaWallet::from_private_key("zz".to_string(), JovaChain::Ethereum)
-        .unwrap_err();
+    let err = JovaWallet::from_private_key("zz".to_string(), JovaChain::Ethereum).unwrap_err();
     assert!(
         matches!(err, FfiError::InvalidPrivateKey { .. }),
         "got {err:?}"

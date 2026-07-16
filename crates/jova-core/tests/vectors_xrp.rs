@@ -81,7 +81,7 @@ fn xrp_sign_tx_vectors() {
         let wallet = JovaWallet::from_mnemonic(mnemonic, pass)
             .unwrap_or_else(|e| panic!("vector {id}: from_mnemonic failed: {e}"));
         let signed = wallet
-            .sign_tx(&unsigned)
+            .sign_tx(&unsigned, 0)
             .unwrap_or_else(|e| panic!("vector {id}: sign_tx() failed: {e}"));
 
         // xrpl-py emits uppercase hex; the SDK normalizes to uppercase too,
@@ -133,7 +133,7 @@ fn xrp_error_vectors() {
         let result: Result<(), JovaError> = if v["input"].get("unsigned_tx").is_some() {
             let unsigned: UnsignedTx = serde_json::from_value(v["input"]["unsigned_tx"].clone())
                 .unwrap_or_else(|e| panic!("vector {id}: deserialise unsigned_tx: {e}"));
-            wallet.sign_tx(&unsigned).map(|_| ())
+            wallet.sign_tx(&unsigned, 0).map(|_| ())
         } else {
             panic!("XRP error vector {id} must carry an unsigned_tx in input");
         };

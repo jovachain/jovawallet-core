@@ -22,9 +22,17 @@ enum KeyMaterial {
     /// HD wallet: per-chain keys are BIP-32 / SLIP-10 derived from this seed.
     Seed(Seed),
     /// Imported secp256k1 leaf key (EVM family, Bitcoin, or XRP). Serves only `chain`.
-    Secp256k1 { key: [u8; 32], #[zeroize(skip)] chain: JovaChain },
+    Secp256k1 {
+        key: [u8; 32],
+        #[zeroize(skip)]
+        chain: JovaChain,
+    },
     /// Imported ed25519 leaf key (Solana). Serves only `chain`.
-    Ed25519 { key: [u8; 32], #[zeroize(skip)] chain: JovaChain },
+    Ed25519 {
+        key: [u8; 32],
+        #[zeroize(skip)]
+        chain: JovaChain,
+    },
 }
 
 pub struct JovaWallet {
@@ -59,10 +67,8 @@ impl JovaWallet {
     /// `UnsupportedChain`.
     pub fn from_private_key(hex: &str, chain: &JovaChain) -> Result<Self, JovaError> {
         let key = parse_private_key_hex(hex)?;
-        let is_secp = matches!(
-            chain,
-            JovaChain::Bitcoin | JovaChain::Xrp
-        ) || chain.evm_chain_id().is_some();
+        let is_secp =
+            matches!(chain, JovaChain::Bitcoin | JovaChain::Xrp) || chain.evm_chain_id().is_some();
         if is_secp {
             // Reject scalars outside the secp256k1 group order (and zero).
             secp256k1::SecretKey::from_byte_array(key).map_err(|_| {
@@ -110,42 +116,53 @@ impl JovaWallet {
         }
     }
 
-    /// Derive the canonical address for the given chain.
+    /// Derive the canonical address for the given chain and HD account index.
     ///
-    /// `_account` is reserved for future multi-account support;
-    /// in v1 all EVM chains use the account at index 0 within
-    /// the m/44'/60'/0'/0/0 path, and Bitcoin uses the BIP-84
-    /// m/84'/0'/0'/0/0 path.
-    pub fn address(&self, chain: &JovaChain, _account: u32) -> Result<Address, JovaError> {
+    /// `account` selects the derived key per the scheme documented on
+    /// [`JovaChain::derivation_path`]: for the secp256k1 chains it increments
+    /// the BIP-44/84 `address_index` (MetaMask-compatible for EVM); for Solana
+    /// it increments the hardened `account'` level. `account = 0` reproduces
+    /// the v0.4.0 addresses exactly.
+    ///
+    /// For imported single-key wallets ([`Self::from_private_key`]) there is
+    /// only one leaf key, so `account` is ignored — `address` and `sign_*`
+    /// both ignore it, preserving key/address parity.
+    pub fn address(&self, chain: &JovaChain, account: u32) -> Result<Address, JovaError> {
         self.ensure_chain_allowed(chain)?;
         match chain {
             JovaChain::Bitcoin => {
-                let xprv = self.derive_for(chain)?;
+                let xprv = self.derive_for(chain, account)?;
                 Ok(BtcSigner.derive_address(&xprv)?)
             }
             JovaChain::Xrp => {
-                let xprv = self.derive_for(chain)?;
+                let xprv = self.derive_for(chain, account)?;
                 Ok(XrpSigner.derive_address(&xprv)?)
             }
             JovaChain::Solana => {
                 // Solana uses an ed25519 leaf key (Ed25519Xprv); SolSigner is
                 // not a ChainSigner impl (the trait is locked to secp256k1
                 // XPrv), so route directly.
-                let xprv = self.derive_ed25519_for(chain)?;
+                let xprv = self.derive_ed25519_for(chain, account)?;
                 Ok(SolSigner.derive_address(&xprv)?)
             }
             c if c.evm_chain_id().is_some() => {
                 let signer = self.evm_signer(c)?;
-                let xprv = self.derive_for(c)?;
+                let xprv = self.derive_for(c, account)?;
                 Ok(signer.derive_address(&xprv)?)
             }
             other => Err(JovaError::UnsupportedChain(format!("{:?}", other))),
         }
     }
 
-    /// Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
-    /// For Bitcoin, the PSBT carries its own input descriptors.
-    pub fn sign_tx(&self, unsigned: &UnsignedTx) -> Result<SignedTx, JovaError> {
+    /// Sign a transaction with the key at HD account index `account`.
+    ///
+    /// For EVM, the chain ID inside the variant is authoritative. For Bitcoin,
+    /// the PSBT carries its own input descriptors. `account` selects the same
+    /// key that [`Self::address`] returns for `(chain, account)`, guaranteeing
+    /// the signature corresponds to that address. See
+    /// [`JovaChain::derivation_path`] for the per-chain scheme. `account` is
+    /// ignored for imported single-key wallets.
+    pub fn sign_tx(&self, unsigned: &UnsignedTx, account: u32) -> Result<SignedTx, JovaError> {
         self.ensure_chain_allowed(&chain_of_unsigned_tx(unsigned))?;
         match unsigned {
             UnsignedTx::Evm(evm) => {
@@ -156,43 +173,50 @@ impl JovaWallet {
                 let signer = EvmSigner {
                     chain_label: static_label,
                 };
-                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned))?;
+                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned), account)?;
                 let mut signed = signer.sign_tx(&xprv, unsigned)?;
                 signed.chain = chain_label;
                 Ok(signed)
             }
             UnsignedTx::Bitcoin { .. } => {
-                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned))?;
+                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned), account)?;
                 Ok(BtcSigner.sign_tx(&xprv, unsigned)?)
             }
             UnsignedTx::Xrp { .. } => {
-                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned))?;
+                let xprv = self.derive_for(&chain_of_unsigned_tx(unsigned), account)?;
                 Ok(XrpSigner.sign_tx(&xprv, unsigned)?)
             }
             UnsignedTx::Solana { .. } => {
-                let xprv = self.derive_ed25519_for(&JovaChain::Solana)?;
+                let xprv = self.derive_ed25519_for(&JovaChain::Solana, account)?;
                 Ok(SolSigner.sign_tx(&xprv, unsigned)?)
             }
         }
     }
 
-    /// Sign a message. Chain is implicit in the `SignableMessage` variant.
-    pub fn sign_message(&self, msg: &SignableMessage) -> Result<Signature, JovaError> {
+    /// Sign a message with the key at HD account index `account`. Chain is
+    /// implicit in the `SignableMessage` variant. `account` selects the same
+    /// key that [`Self::address`] returns for `(chain, account)`; it is
+    /// ignored for imported single-key wallets.
+    pub fn sign_message(
+        &self,
+        msg: &SignableMessage,
+        account: u32,
+    ) -> Result<Signature, JovaError> {
         self.ensure_chain_allowed(&chain_of_signable_message(msg))?;
         match msg {
             SignableMessage::EvmPersonalSign { .. } | SignableMessage::EvmTypedDataV4 { .. } => {
                 let signer = EvmSigner {
                     chain_label: "ethereum",
                 };
-                let xprv = self.derive_for(&chain_of_signable_message(msg))?;
+                let xprv = self.derive_for(&chain_of_signable_message(msg), account)?;
                 Ok(signer.sign_message(&xprv, msg)?)
             }
             SignableMessage::Bitcoin { .. } => {
-                let xprv = self.derive_for(&chain_of_signable_message(msg))?;
+                let xprv = self.derive_for(&chain_of_signable_message(msg), account)?;
                 Ok(BtcSigner.sign_message(&xprv, msg)?)
             }
             SignableMessage::Solana { .. } => {
-                let xprv = self.derive_ed25519_for(&JovaChain::Solana)?;
+                let xprv = self.derive_ed25519_for(&JovaChain::Solana, account)?;
                 Ok(SolSigner.sign_message(&xprv, msg)?)
             }
         }
@@ -203,7 +227,9 @@ impl JovaWallet {
     fn bound_chain(&self) -> Option<&JovaChain> {
         match &self.material {
             KeyMaterial::Seed(_) => None,
-            KeyMaterial::Secp256k1 { chain, .. } | KeyMaterial::Ed25519 { chain, .. } => Some(chain),
+            KeyMaterial::Secp256k1 { chain, .. } | KeyMaterial::Ed25519 { chain, .. } => {
+                Some(chain)
+            }
         }
     }
 
@@ -230,12 +256,17 @@ impl JovaWallet {
         })
     }
 
-    fn derive_for(&self, chain: &JovaChain) -> Result<jova_core_primitives::XPrv, JovaError> {
+    fn derive_for(
+        &self,
+        chain: &JovaChain,
+        account: u32,
+    ) -> Result<jova_core_primitives::XPrv, JovaError> {
         match &self.material {
             // Imported secp256k1 leaf key: wrap raw bytes in an XPrv. The chain
             // code is irrelevant for leaf signing — the secp256k1 signers read
-            // only private_key_bytes()/public_key_*(). Strict scoping already
-            // enforced by ensure_chain_allowed at the public entry points.
+            // only private_key_bytes()/public_key_*(). There is only one leaf
+            // key, so `account` is ignored. Strict scoping already enforced by
+            // ensure_chain_allowed at the public entry points.
             KeyMaterial::Secp256k1 { key, .. } => Ok(
                 jova_core_primitives::XPrv::from_raw_key_and_chain_code(*key, [0u8; 32]),
             ),
@@ -243,7 +274,7 @@ impl JovaWallet {
                 "ed25519 key cannot derive secp256k1 chain {:?}",
                 chain
             ))),
-            KeyMaterial::Seed(_) => self.derive_path(chain.derivation_path()),
+            KeyMaterial::Seed(_) => self.derive_path(&chain.derivation_path(account)),
         }
     }
 
@@ -264,16 +295,20 @@ impl JovaWallet {
         })
     }
 
-    fn derive_ed25519_for(&self, chain: &JovaChain) -> Result<Ed25519Xprv, JovaError> {
+    fn derive_ed25519_for(
+        &self,
+        chain: &JovaChain,
+        account: u32,
+    ) -> Result<Ed25519Xprv, JovaError> {
         match &self.material {
-            KeyMaterial::Ed25519 { key, .. } => Ok(
-                Ed25519Xprv::from_raw_secret_and_chain_code(*key, [0u8; 32]),
-            ),
+            KeyMaterial::Ed25519 { key, .. } => {
+                Ok(Ed25519Xprv::from_raw_secret_and_chain_code(*key, [0u8; 32]))
+            }
             KeyMaterial::Secp256k1 { .. } => Err(JovaError::UnsupportedChain(format!(
                 "secp256k1 key cannot derive ed25519 chain {:?}",
                 chain
             ))),
-            KeyMaterial::Seed(_) => self.derive_ed25519_path(chain.derivation_path()),
+            KeyMaterial::Seed(_) => self.derive_ed25519_path(&chain.derivation_path(account)),
         }
     }
 
