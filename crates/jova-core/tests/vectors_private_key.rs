@@ -9,7 +9,10 @@ use serde_json::Value;
 fn load_vectors() -> Vec<Value> {
     let raw = include_str!("../../../spec/test-vectors.json");
     let v: Value = serde_json::from_str(raw).expect("spec/test-vectors.json is valid JSON");
-    v["vectors"].as_array().expect("'vectors' array exists").clone()
+    v["vectors"]
+        .as_array()
+        .expect("'vectors' array exists")
+        .clone()
 }
 
 #[test]
@@ -37,7 +40,10 @@ fn private_key_address_vectors() {
         );
         ran += 1;
     }
-    assert!(ran >= 3, "expected at least 3 private_key_address vectors, ran {ran}");
+    assert!(
+        ran >= 3,
+        "expected at least 3 private_key_address vectors, ran {ran}"
+    );
 }
 
 #[test]
@@ -59,7 +65,7 @@ fn private_key_sign_tx_vectors() {
         let wallet = JovaWallet::from_private_key(pk, &chain)
             .unwrap_or_else(|e| panic!("vector {id}: from_private_key failed: {e}"));
         let signed = wallet
-            .sign_tx(&unsigned)
+            .sign_tx(&unsigned, 0)
             .unwrap_or_else(|e| panic!("vector {id}: sign_tx() failed: {e}"));
         assert_eq!(
             signed.raw_hex.to_lowercase(),
@@ -73,5 +79,8 @@ fn private_key_sign_tx_vectors() {
         );
         ran += 1;
     }
-    assert!(ran >= 1, "expected at least 1 private_key_sign_tx vector, ran {ran}");
+    assert!(
+        ran >= 1,
+        "expected at least 1 private_key_sign_tx vector, ran {ran}"
+    );
 }

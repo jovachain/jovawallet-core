@@ -353,18 +353,32 @@ impl JovaWallet {
         ))
     }
 
-    /// Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
-    pub fn sign_tx(&self, tx: UnsignedTx) -> Result<SignedTx, FfiError> {
+    /// Sign a transaction with the key at HD account index `account`.
+    ///
+    /// For EVM, the chain ID inside the variant is authoritative. `account`
+    /// selects the same key that `address` returns for the tx's chain, so the
+    /// signature always corresponds to that address. Defaults to `0` for
+    /// backward compatibility with existing single-account callers.
+    #[uniffi::method(default(account = 0))]
+    pub fn sign_tx(&self, tx: UnsignedTx, account: u32) -> Result<SignedTx, FfiError> {
         let core_tx = ffi_unsigned_tx_to_core(tx)?;
         Ok(core_signed_tx_to_ffi(
-            self.inner.sign_tx(&core_tx).map_err(FfiError::from)?,
+            self.inner
+                .sign_tx(&core_tx, account)
+                .map_err(FfiError::from)?,
         ))
     }
 
-    /// Sign a message. Chain is implicit in the `SignableMessage` variant.
-    pub fn sign_message(&self, msg: SignableMessage) -> Result<Signature, FfiError> {
+    /// Sign a message with the key at HD account index `account`. Chain is
+    /// implicit in the `SignableMessage` variant. Defaults to `0` for backward
+    /// compatibility with existing single-account callers.
+    #[uniffi::method(default(account = 0))]
+    pub fn sign_message(&self, msg: SignableMessage, account: u32) -> Result<Signature, FfiError> {
         let core_msg = ffi_signable_message_to_core(msg)?;
-        let sig = self.inner.sign_message(&core_msg).map_err(FfiError::from)?;
+        let sig = self
+            .inner
+            .sign_message(&core_msg, account)
+            .map_err(FfiError::from)?;
         Ok(Signature { hex: sig.hex })
     }
 }

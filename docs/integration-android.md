@@ -20,7 +20,7 @@ Until v1.0.0 ships to Maven Central (gated on the external audit — see [issue 
 
 ```kotlin
 dependencies {
-    implementation(files("libs/jova-core-0.3.1.aar"))
+    implementation(files("libs/jova-core-0.5.0.aar"))
     // Required transitive deps — the file-based AAR import doesn't propagate them.
     implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
@@ -168,22 +168,25 @@ class WalletRepository(context: Context) {
         return str.toByteArray(Charsets.UTF_8)
     }
 
-    fun signTransaction(tx: UnsignedTx): SignedTx {
+    // `account` selects the HD account and MUST match the account whose
+    // address(chain, account) the app shows as the "from" address. Defaults
+    // to 0 (uniffi default), so single-account callers can omit it.
+    fun signTransaction(tx: UnsignedTx, account: UInt = 0u): SignedTx {
         val bytes = loadMnemonicBytes()
         try {
             JovaWallet.fromMnemonicBuffer(MnemonicBuffer(bytes, ByteArray(0))).use { wallet ->
-                return wallet.signTx(tx)
+                return wallet.signTx(tx, account)
             }
         } finally {
             bytes.fill(0)
         }
     }
 
-    fun signMessage(msg: SignableMessage): Signature {
+    fun signMessage(msg: SignableMessage, account: UInt = 0u): Signature {
         val bytes = loadMnemonicBytes()
         try {
             JovaWallet.fromMnemonicBuffer(MnemonicBuffer(bytes, ByteArray(0))).use { wallet ->
-                return wallet.signMessage(msg)
+                return wallet.signMessage(msg, account)
             }
         } finally {
             bytes.fill(0)

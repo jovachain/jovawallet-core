@@ -44,7 +44,7 @@ fn btc_sign_tx_dispatch_single_input() {
             .trim()
             .to_lowercase();
     let signed = wallet
-        .sign_tx(&UnsignedTx::Bitcoin { psbt_base64: psbt })
+        .sign_tx(&UnsignedTx::Bitcoin { psbt_base64: psbt }, 0)
         .unwrap();
     assert_eq!(signed.chain, "bitcoin");
     assert!(
@@ -61,7 +61,7 @@ fn btc_sign_tx_dispatch_two_party_returns_psbt_prefix() {
         .trim()
         .to_string();
     let signed = wallet
-        .sign_tx(&UnsignedTx::Bitcoin { psbt_base64: psbt })
+        .sign_tx(&UnsignedTx::Bitcoin { psbt_base64: psbt }, 0)
         .unwrap();
     assert_eq!(signed.chain, "bitcoin");
     assert!(
@@ -80,7 +80,7 @@ fn btc_sign_message_dispatch_bip322() {
         address: "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu".to_string(),
         scheme: BtcMsgScheme::Bip322,
     };
-    let sig = wallet.sign_message(&msg).unwrap();
+    let sig = wallet.sign_message(&msg, 0).unwrap();
     assert_eq!(sig.hex, expected);
 }
 
@@ -175,7 +175,7 @@ fn btc_sign_tx_vectors() {
         let wallet = JovaWallet::from_mnemonic(mnemonic, pass)
             .unwrap_or_else(|e| panic!("vector {id}: from_mnemonic failed: {e}"));
         let signed = wallet
-            .sign_tx(&unsigned)
+            .sign_tx(&unsigned, 0)
             .unwrap_or_else(|e| panic!("vector {id}: sign_tx() failed: {e}"));
 
         // For multi-party PSBTs the captured value carries the `psbt:` prefix
@@ -217,7 +217,7 @@ fn btc_sign_message_vectors() {
         let wallet = JovaWallet::from_mnemonic(mnemonic, pass)
             .unwrap_or_else(|e| panic!("vector {id}: from_mnemonic failed: {e}"));
         let sig = wallet
-            .sign_message(&msg)
+            .sign_message(&msg, 0)
             .unwrap_or_else(|e| panic!("vector {id}: sign_message() failed: {e}"));
 
         // BTC signature_hex actually carries a base64 string (BIP-322 witness
@@ -265,11 +265,11 @@ fn btc_error_vectors() {
         let result: Result<(), JovaError> = if v["input"].get("unsigned_tx").is_some() {
             let unsigned: UnsignedTx = serde_json::from_value(v["input"]["unsigned_tx"].clone())
                 .unwrap_or_else(|e| panic!("vector {id}: deserialise unsigned_tx: {e}"));
-            wallet.sign_tx(&unsigned).map(|_| ())
+            wallet.sign_tx(&unsigned, 0).map(|_| ())
         } else if v["input"].get("message").is_some() {
             let msg: SignableMessage = serde_json::from_value(v["input"]["message"].clone())
                 .unwrap_or_else(|e| panic!("vector {id}: deserialise message: {e}"));
-            wallet.sign_message(&msg).map(|_| ())
+            wallet.sign_message(&msg, 0).map(|_| ())
         } else {
             panic!("error vector {id} has neither unsigned_tx nor message in input");
         };

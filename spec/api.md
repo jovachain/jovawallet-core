@@ -201,15 +201,18 @@ address(on: JovaChain, account: UInt32 = 0) throws(JovaError) -> Address
 addresses(on: [JovaChain], account: UInt32 = 0) throws(JovaError) -> [Address]
 //   Convenience: derive multiple addresses in one call. Order matches the input.
 
-signTx(unsigned: UnsignedTx) throws(JovaError) -> SignedTx
+signTx(unsigned: UnsignedTx, account: UInt32 = 0) throws(JovaError) -> SignedTx
 //   Chain is implicit in the `UnsignedTx` variant; for EVM, the chain ID inside
 //   the variant payload is authoritative. SDK routes to the right signer.
+//   Signs with the key at HD `account` — the same key `address(on:account:)`
+//   returns for that chain and account.
 
-signMessage(msg: SignableMessage) throws(JovaError) -> Signature
-//   Chain is implicit in the `SignableMessage` variant.
+signMessage(msg: SignableMessage, account: UInt32 = 0) throws(JovaError) -> Signature
+//   Chain is implicit in the `SignableMessage` variant. Signs with the key at
+//   HD `account`, matching `address(on:account:)`.
 ```
 
-> **Account index** is reserved for the case where a user wants more than one address per chain (advanced feature). v1 apps always pass `0`.
+> **Account index** selects the HD account (MetaMask-style multiple accounts from one mnemonic). `address`, `signTx`, and `signMessage` all take it and derive the same key for a given `(chain, account)`. For EVM it increments the BIP-44 `address_index` (`m/44'/60'/0'/0/N`), matching MetaMask; see `chains.md` for the per-chain path. Single-account apps pass `0` (the default).
 
 ---
 
