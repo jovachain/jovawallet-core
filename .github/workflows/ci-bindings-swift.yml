@@ -22,10 +22,14 @@ jobs:
 
       # uniffi CLI binary ships inside the uniffi umbrella crate (0.30+).
       # Install via --features cli so both uniffi-bindgen and uniffi-bindgen-swift
-      # are placed on PATH. Version must match the uniffi macro crate in Cargo.toml
-      # (currently 0.31.1). --locked freezes transitive deps.
+      # are placed on PATH. The CLI MUST be the exact same version as the `uniffi`
+      # macro crate, or metadata extraction fails with "No UniFFI metadata found".
+      # Pin to the version resolved in Cargo.lock (do NOT install latest).
       - name: Install uniffi-bindgen
-        run: cargo install uniffi --features cli --locked
+        run: |
+          UNIFFI_VERSION="$(grep -A1 '^name = "uniffi"$' Cargo.lock | grep '^version = ' | cut -d'"' -f2)"
+          echo "Pinning uniffi CLI to ${UNIFFI_VERSION} (matches Cargo.lock)"
+          cargo install uniffi --features cli --locked --version "=${UNIFFI_VERSION}"
 
       # Build XCFramework (device + sim + macOS universal) then run Swift tests.
       - run: ./bindings/swift/scripts/build-xcframework.sh

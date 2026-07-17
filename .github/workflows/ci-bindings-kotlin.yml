@@ -27,11 +27,15 @@ jobs:
           ndk-version: r29
 
       # Install cargo-ndk (Android cross-compile helper) and uniffi CLI.
-      # uniffi version must match the macro crate in Cargo.toml (currently 0.31.1).
+      # uniffi-bindgen MUST be the exact same version as the `uniffi` macro crate,
+      # or metadata extraction fails with "No UniFFI metadata found in ...".
+      # Pin the CLI to the version resolved in Cargo.lock (do NOT install latest).
       - name: Install cargo-ndk and uniffi-bindgen
         run: |
           cargo install cargo-ndk --locked
-          cargo install uniffi --features cli --locked
+          UNIFFI_VERSION="$(grep -A1 '^name = "uniffi"$' Cargo.lock | grep '^version = ' | cut -d'"' -f2)"
+          echo "Pinning uniffi CLI to ${UNIFFI_VERSION} (matches Cargo.lock)"
+          cargo install uniffi --features cli --locked --version "=${UNIFFI_VERSION}"
 
       # Java 21: Kotlin scaffold pins jvmToolchain(21) in build.gradle.kts.
       - uses: actions/setup-java@v4
