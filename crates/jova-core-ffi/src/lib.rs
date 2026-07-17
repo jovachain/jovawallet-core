@@ -357,9 +357,10 @@ impl JovaWallet {
     ///
     /// For EVM, the chain ID inside the variant is authoritative. `account`
     /// selects the same key that `address` returns for the tx's chain, so the
-    /// signature always corresponds to that address. Defaults to `0` for
-    /// backward compatibility with existing single-account callers.
-    #[uniffi::method(default(account = 0))]
+    /// signature always corresponds to that address. `account` is required
+    /// (mirrors `address`); pass `0` for the primary account. UniFFI's Kotlin
+    /// backend does not emit default argument values, so this is a plain
+    /// required parameter rather than a defaulted one.
     pub fn sign_tx(&self, tx: UnsignedTx, account: u32) -> Result<SignedTx, FfiError> {
         let core_tx = ffi_unsigned_tx_to_core(tx)?;
         Ok(core_signed_tx_to_ffi(
@@ -370,9 +371,8 @@ impl JovaWallet {
     }
 
     /// Sign a message with the key at HD account index `account`. Chain is
-    /// implicit in the `SignableMessage` variant. Defaults to `0` for backward
-    /// compatibility with existing single-account callers.
-    #[uniffi::method(default(account = 0))]
+    /// implicit in the `SignableMessage` variant. `account` is required
+    /// (mirrors `address`); pass `0` for the primary account.
     pub fn sign_message(&self, msg: SignableMessage, account: u32) -> Result<Signature, FfiError> {
         let core_msg = ffi_signable_message_to_core(msg)?;
         let sig = self

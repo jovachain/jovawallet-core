@@ -69,7 +69,7 @@ class EvmVectorsTest {
             val expected = v.getJSONObject("expected")
 
             val wallet = JovaWallet.fromMnemonic(mnemonic, pass)
-            val signed = wallet.signTx(unsigned)
+            val signed = wallet.signTx(unsigned, 0u)
             assertEquals(
                 "signed_hex mismatch for vector ${v.getString("id")}",
                 expected.getString("signed_hex").lowercase(),
@@ -112,7 +112,7 @@ class EvmVectorsTest {
             val expectedSig = v.getJSONObject("expected").getString("signature").lowercase()
 
             val wallet = JovaWallet.fromMnemonic(mnemonic, pass)
-            val sig = wallet.signMessage(signable)
+            val sig = wallet.signMessage(signable, 0u)
             assertEquals(
                 "signature mismatch for vector ${v.getString("id")}",
                 expectedSig,
@@ -144,7 +144,7 @@ class EvmVectorsTest {
             val unsigned = UnsignedTx.Evm(tx = decodeEvmUnsigned(unsignedDict))
             val wallet = JovaWallet.fromMnemonic(mnemonic, pass)
             try {
-                wallet.signTx(unsigned)
+                wallet.signTx(unsigned, 0u)
                 fail("Expected FfiException.$expectedVariant for vector ${v.getString("id")}, but no exception was thrown")
             } catch (err: FfiException) {
                 val actualVariant = err::class.simpleName ?: "Unknown"
