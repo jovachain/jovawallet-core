@@ -80,7 +80,7 @@ class BtcVectorsTest {
             val expectedHex = v.getJSONObject("expected").getString("signed_hex")
 
             val wallet = JovaWallet.fromMnemonic(mnemonic, pass)
-            val signed = wallet.signTx(unsigned)
+            val signed = wallet.signTx(unsigned, 0u)
 
             // The captured value for multi-party PSBTs is `psbt:<base64>`;
             // for finalized owned PSBTs it's pure lowercase hex. Compare
@@ -114,7 +114,7 @@ class BtcVectorsTest {
             val expectedSig = v.getJSONObject("expected").getString("signature_hex")
 
             val wallet = JovaWallet.fromMnemonic(mnemonic, pass)
-            val sig = wallet.signMessage(signable)
+            val sig = wallet.signMessage(signable, 0u)
             // base64 is case-sensitive; compare exactly.
             assertEquals("signature mismatch for vector $id", expectedSig, sig.hex)
             ran++
@@ -146,11 +146,11 @@ class BtcVectorsTest {
                 when {
                     input.has("unsigned_tx") -> {
                         val unsigned = decodeUnsignedTx(input.getJSONObject("unsigned_tx"))
-                        wallet.signTx(unsigned)
+                        wallet.signTx(unsigned, 0u)
                     }
                     input.has("message") -> {
                         val msg = decodeSignableMessage(input.getJSONObject("message"))
-                        wallet.signMessage(msg)
+                        wallet.signMessage(msg, 0u)
                     }
                     else -> fail("vector $id has neither unsigned_tx nor message in input")
                 }

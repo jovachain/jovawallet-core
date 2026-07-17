@@ -48,8 +48,8 @@ interface RawModule {
 
 interface RawWallet {
     address(chain: JovaChain, account: number): Address;
-    signTx(unsigned: UnsignedTx): SignedTx;
-    signMessage(msg: SignableMessage): Signature;
+    signTx(unsigned: UnsignedTx, account: number): SignedTx;
+    signMessage(msg: SignableMessage, account: number): Signature;
     destroy(): void;
     free(): void;
 }
@@ -130,17 +130,17 @@ export class JovaWallet implements Disposable {
         }
     }
 
-    signTx(unsigned: UnsignedTx): SignedTx {
+    signTx(unsigned: UnsignedTx, account: number = 0): SignedTx {
         try {
-            return this.wasm.signTx(unsigned);
+            return this.wasm.signTx(unsigned, account);
         } catch (e) {
             throw asJovaException(e);
         }
     }
 
-    signMessage(msg: SignableMessage): Signature {
+    signMessage(msg: SignableMessage, account: number = 0): Signature {
         try {
-            return this.wasm.signMessage(msg);
+            return this.wasm.signMessage(msg, account);
         } catch (e) {
             throw asJovaException(e);
         }

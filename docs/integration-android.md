@@ -169,8 +169,10 @@ class WalletRepository(context: Context) {
     }
 
     // `account` selects the HD account and MUST match the account whose
-    // address(chain, account) the app shows as the "from" address. Defaults
-    // to 0 (uniffi default), so single-account callers can omit it.
+    // address(chain, account) the app shows as the "from" address. The SDK's
+    // generated `wallet.signTx(tx, account)` requires it explicitly; this
+    // app-side wrapper adds a Kotlin `= 0u` default so single-account callers
+    // can omit it.
     fun signTransaction(tx: UnsignedTx, account: UInt = 0u): SignedTx {
         val bytes = loadMnemonicBytes()
         try {

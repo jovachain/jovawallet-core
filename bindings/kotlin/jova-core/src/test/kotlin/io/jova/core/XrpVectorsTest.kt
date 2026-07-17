@@ -80,7 +80,7 @@ class XrpVectorsTest {
             val expectedHash = v.getJSONObject("expected").getString("tx_hash")
 
             val wallet = JovaWallet.fromMnemonic(mnemonic, pass)
-            val signed = wallet.signTx(unsigned)
+            val signed = wallet.signTx(unsigned, 0u)
 
             // xrpl-py emits uppercase hex; the SDK normalizes to uppercase too.
             // Compare case-insensitively for resilience.
@@ -122,7 +122,7 @@ class XrpVectorsTest {
             try {
                 if (input.has("unsigned_tx")) {
                     val unsigned = decodeUnsignedTx(input.getJSONObject("unsigned_tx"))
-                    wallet.signTx(unsigned)
+                    wallet.signTx(unsigned, 0u)
                 } else {
                     fail("XRP error vector $id must carry an unsigned_tx in input")
                 }

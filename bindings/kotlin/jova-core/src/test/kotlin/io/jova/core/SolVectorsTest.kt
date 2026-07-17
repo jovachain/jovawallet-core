@@ -81,7 +81,7 @@ class SolVectorsTest {
             val expectedHash = v.getJSONObject("expected").getString("tx_hash")
 
             val wallet = JovaWallet.fromMnemonic(mnemonic, pass)
-            val signed = wallet.signTx(unsigned)
+            val signed = wallet.signTx(unsigned, 0u)
 
             assertEquals("signed_hex mismatch for vector $id", expectedHex, signed.rawHex)
             assertEquals("tx_hash mismatch for vector $id", expectedHash, signed.txHash)
@@ -110,7 +110,7 @@ class SolVectorsTest {
             val expected = v.getJSONObject("expected").getString("signature_hex")
 
             val wallet = JovaWallet.fromMnemonic(mnemonic, pass)
-            val sig = wallet.signMessage(msg)
+            val sig = wallet.signMessage(msg, 0u)
 
             assertEquals("SOL signature mismatch for vector $id", expected, sig.hex)
             ran++
@@ -139,11 +139,11 @@ class SolVectorsTest {
                 when {
                     input.has("unsigned_tx") -> {
                         val unsigned = decodeUnsignedTx(input.getJSONObject("unsigned_tx"))
-                        wallet.signTx(unsigned)
+                        wallet.signTx(unsigned, 0u)
                     }
                     input.has("message") -> {
                         val msg = decodeSignableMessage(input.getJSONObject("message"))
-                        wallet.signMessage(msg)
+                        wallet.signMessage(msg, 0u)
                     }
                     else -> fail("SOL error vector $id must carry an unsigned_tx or message in input")
                 }
