@@ -270,12 +270,12 @@ RustBuffer uniffi_jova_core_ffi_fn_method_jovawallet_address(uint64_t ptr, RustB
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_SIGN_MESSAGE
 #define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_SIGN_MESSAGE
-RustBuffer uniffi_jova_core_ffi_fn_method_jovawallet_sign_message(uint64_t ptr, RustBuffer msg, RustCallStatus *_Nonnull out_status
+RustBuffer uniffi_jova_core_ffi_fn_method_jovawallet_sign_message(uint64_t ptr, RustBuffer msg, uint32_t account, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_SIGN_TX
 #define UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_METHOD_JOVAWALLET_SIGN_TX
-RustBuffer uniffi_jova_core_ffi_fn_method_jovawallet_sign_tx(uint64_t ptr, RustBuffer tx, RustCallStatus *_Nonnull out_status
+RustBuffer uniffi_jova_core_ffi_fn_method_jovawallet_sign_tx(uint64_t ptr, RustBuffer tx, uint32_t account, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_JOVA_CORE_FFI_FN_FUNC_CREATE_MNEMONIC

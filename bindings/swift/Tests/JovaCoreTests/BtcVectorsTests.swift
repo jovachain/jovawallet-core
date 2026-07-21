@@ -57,7 +57,7 @@ final class BtcVectorsTests: XCTestCase {
             let expectedHex = ((v["expected"] as! [String: Any])["signed_hex"] as! String).lowercased()
 
             let wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: pass)
-            let signed = try wallet.signTx(tx: unsigned)
+            let signed = try wallet.signTx(tx: unsigned, account: 0)
             // The captured value for multi-party PSBTs is `psbt:<base64>`;
             // for finalized owned PSBTs it's pure lowercase hex. Compare
             // case-insensitively to absorb capture-tool casing differences.
@@ -88,7 +88,7 @@ final class BtcVectorsTests: XCTestCase {
             let expectedSig = (v["expected"] as! [String: Any])["signature_hex"] as! String
 
             let wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: pass)
-            let sig = try wallet.signMessage(msg: signable)
+            let sig = try wallet.signMessage(msg: signable, account: 0)
             // base64 is case-sensitive; compare exactly.
             XCTAssertEqual(sig.hex, expectedSig, "signature mismatch for vector \(id)")
             ran += 1
@@ -120,10 +120,10 @@ final class BtcVectorsTests: XCTestCase {
             do {
                 if let unsignedDict = input["unsigned_tx"] as? [String: Any] {
                     let unsigned = try decodeUnsignedTx(unsignedDict)
-                    _ = try wallet.signTx(tx: unsigned)
+                    _ = try wallet.signTx(tx: unsigned, account: 0)
                 } else if let messageDict = input["message"] as? [String: Any] {
                     let msg = try decodeSignableMessage(messageDict)
-                    _ = try wallet.signMessage(msg: msg)
+                    _ = try wallet.signMessage(msg: msg, account: 0)
                 } else {
                     XCTFail("vector \(id) has neither unsigned_tx nor message in input")
                     continue
