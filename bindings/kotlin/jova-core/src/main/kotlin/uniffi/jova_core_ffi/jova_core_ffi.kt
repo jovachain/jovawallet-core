@@ -680,9 +680,9 @@ internal object UniffiLib {
     ): Long
     external fun uniffi_jova_core_ffi_fn_method_jovawallet_address(`ptr`: Long,`chain`: RustBuffer.ByValue,`account`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    external fun uniffi_jova_core_ffi_fn_method_jovawallet_sign_message(`ptr`: Long,`msg`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_jova_core_ffi_fn_method_jovawallet_sign_message(`ptr`: Long,`msg`: RustBuffer.ByValue,`account`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    external fun uniffi_jova_core_ffi_fn_method_jovawallet_sign_tx(`ptr`: Long,`tx`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_jova_core_ffi_fn_method_jovawallet_sign_tx(`ptr`: Long,`tx`: RustBuffer.ByValue,`account`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_jova_core_ffi_fn_func_create_mnemonic(`bits256`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -821,10 +821,10 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_jova_core_ffi_checksum_method_jovawallet_address() != 56552.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_jova_core_ffi_checksum_method_jovawallet_sign_message() != 15053.toShort()) {
+    if (lib.uniffi_jova_core_ffi_checksum_method_jovawallet_sign_message() != 58219.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_jova_core_ffi_checksum_method_jovawallet_sign_tx() != 22368.toShort()) {
+    if (lib.uniffi_jova_core_ffi_checksum_method_jovawallet_sign_tx() != 21043.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_mnemonic() != 26437.toShort()) {
@@ -1220,14 +1220,23 @@ public interface JovaWalletInterface {
     fun `address`(`chain`: JovaChain, `account`: kotlin.UInt): Address
     
     /**
-     * Sign a message. Chain is implicit in the `SignableMessage` variant.
+     * Sign a message with the key at HD account index `account`. Chain is
+     * implicit in the `SignableMessage` variant. `account` is required
+     * (mirrors `address`); pass `0` for the primary account.
      */
-    fun `signMessage`(`msg`: SignableMessage): Signature
+    fun `signMessage`(`msg`: SignableMessage, `account`: kotlin.UInt): Signature
     
     /**
-     * Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
+     * Sign a transaction with the key at HD account index `account`.
+     *
+     * For EVM, the chain ID inside the variant is authoritative. `account`
+     * selects the same key that `address` returns for the tx's chain, so the
+     * signature always corresponds to that address. `account` is required
+     * (mirrors `address`); pass `0` for the primary account. UniFFI's Kotlin
+     * backend does not emit default argument values, so this is a plain
+     * required parameter rather than a defaulted one.
      */
-    fun `signTx`(`tx`: UnsignedTx): SignedTx
+    fun `signTx`(`tx`: UnsignedTx, `account`: kotlin.UInt): SignedTx
     
     companion object
 }
@@ -1347,15 +1356,17 @@ open class JovaWallet: Disposable, AutoCloseable, JovaWalletInterface
 
     
     /**
-     * Sign a message. Chain is implicit in the `SignableMessage` variant.
+     * Sign a message with the key at HD account index `account`. Chain is
+     * implicit in the `SignableMessage` variant. `account` is required
+     * (mirrors `address`); pass `0` for the primary account.
      */
-    @Throws(FfiException::class)override fun `signMessage`(`msg`: SignableMessage): Signature {
+    @Throws(FfiException::class)override fun `signMessage`(`msg`: SignableMessage, `account`: kotlin.UInt): Signature {
             return FfiConverterTypeSignature.lift(
     callWithHandle {
     uniffiRustCallWithError(FfiException) { _status ->
     UniffiLib.uniffi_jova_core_ffi_fn_method_jovawallet_sign_message(
         it,
-        FfiConverterTypeSignableMessage.lower(`msg`),_status)
+        FfiConverterTypeSignableMessage.lower(`msg`),FfiConverterUInt.lower(`account`),_status)
 }
     }
     )
@@ -1364,15 +1375,22 @@ open class JovaWallet: Disposable, AutoCloseable, JovaWalletInterface
 
     
     /**
-     * Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
+     * Sign a transaction with the key at HD account index `account`.
+     *
+     * For EVM, the chain ID inside the variant is authoritative. `account`
+     * selects the same key that `address` returns for the tx's chain, so the
+     * signature always corresponds to that address. `account` is required
+     * (mirrors `address`); pass `0` for the primary account. UniFFI's Kotlin
+     * backend does not emit default argument values, so this is a plain
+     * required parameter rather than a defaulted one.
      */
-    @Throws(FfiException::class)override fun `signTx`(`tx`: UnsignedTx): SignedTx {
+    @Throws(FfiException::class)override fun `signTx`(`tx`: UnsignedTx, `account`: kotlin.UInt): SignedTx {
             return FfiConverterTypeSignedTx.lift(
     callWithHandle {
     uniffiRustCallWithError(FfiException) { _status ->
     UniffiLib.uniffi_jova_core_ffi_fn_method_jovawallet_sign_tx(
         it,
-        FfiConverterTypeUnsignedTx.lower(`tx`),_status)
+        FfiConverterTypeUnsignedTx.lower(`tx`),FfiConverterUInt.lower(`account`),_status)
 }
     }
     )
