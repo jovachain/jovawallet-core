@@ -55,7 +55,7 @@ final class XrpVectorsTests: XCTestCase {
             let expectedHash = (expectedDict["tx_hash"] as! String).uppercased()
 
             let wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: pass)
-            let signed = try wallet.signTx(tx: unsigned)
+            let signed = try wallet.signTx(tx: unsigned, account: 0)
             // xrpl-py emits uppercase hex; the SDK normalizes to uppercase too.
             // Compare case-insensitively for resilience.
             XCTAssertEqual(
@@ -98,7 +98,7 @@ final class XrpVectorsTests: XCTestCase {
                     continue
                 }
                 let unsigned = try decodeUnsignedTx(unsignedDict)
-                _ = try wallet.signTx(tx: unsigned)
+                _ = try wallet.signTx(tx: unsigned, account: 0)
                 XCTFail("Expected FfiError.\(expectedVariant) for vector \(id), but no error was thrown")
             } catch let err as FfiError {
                 // Verify both the variant and that the reason flows through

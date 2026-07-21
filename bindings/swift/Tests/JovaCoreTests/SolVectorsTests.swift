@@ -55,7 +55,7 @@ final class SolVectorsTests: XCTestCase {
             let expectedHash = expectedDict["tx_hash"] as! String
 
             let wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: pass)
-            let signed = try wallet.signTx(tx: unsigned)
+            let signed = try wallet.signTx(tx: unsigned, account: 0)
             XCTAssertEqual(signed.rawHex, expectedHex, "signed_hex mismatch for vector \(id)")
             XCTAssertEqual(signed.txHash, expectedHash, "tx_hash mismatch for vector \(id)")
             ran += 1
@@ -80,7 +80,7 @@ final class SolVectorsTests: XCTestCase {
             let expected = (v["expected"] as! [String: Any])["signature_hex"] as! String
 
             let wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: pass)
-            let sig = try wallet.signMessage(msg: msg)
+            let sig = try wallet.signMessage(msg: msg, account: 0)
             XCTAssertEqual(sig.hex, expected, "SOL signature mismatch for vector \(id)")
             ran += 1
         }
@@ -107,10 +107,10 @@ final class SolVectorsTests: XCTestCase {
             do {
                 if let unsignedDict = input["unsigned_tx"] as? [String: Any] {
                     let unsigned = try decodeUnsignedTx(unsignedDict)
-                    _ = try wallet.signTx(tx: unsigned)
+                    _ = try wallet.signTx(tx: unsigned, account: 0)
                 } else if let msgDict = input["message"] as? [String: Any] {
                     let msg = try decodeSignableMessage(msgDict)
-                    _ = try wallet.signMessage(msg: msg)
+                    _ = try wallet.signMessage(msg: msg, account: 0)
                 } else {
                     XCTFail("SOL error vector \(id) must carry an unsigned_tx or message")
                     continue

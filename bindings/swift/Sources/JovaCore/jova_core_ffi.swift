@@ -524,14 +524,23 @@ public protocol JovaWalletProtocol: AnyObject, Sendable {
     func address(chain: JovaChain, account: UInt32) throws  -> Address
     
     /**
-     * Sign a message. Chain is implicit in the `SignableMessage` variant.
+     * Sign a message with the key at HD account index `account`. Chain is
+     * implicit in the `SignableMessage` variant. `account` is required
+     * (mirrors `address`); pass `0` for the primary account.
      */
-    func signMessage(msg: SignableMessage) throws  -> Signature
+    func signMessage(msg: SignableMessage, account: UInt32) throws  -> Signature
     
     /**
-     * Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
+     * Sign a transaction with the key at HD account index `account`.
+     *
+     * For EVM, the chain ID inside the variant is authoritative. `account`
+     * selects the same key that `address` returns for the tx's chain, so the
+     * signature always corresponds to that address. `account` is required
+     * (mirrors `address`); pass `0` for the primary account. UniFFI's Kotlin
+     * backend does not emit default argument values, so this is a plain
+     * required parameter rather than a defaulted one.
      */
-    func signTx(tx: UnsignedTx) throws  -> SignedTx
+    func signTx(tx: UnsignedTx, account: UInt32) throws  -> SignedTx
     
 }
 open class JovaWallet: JovaWalletProtocol, @unchecked Sendable {
@@ -626,25 +635,36 @@ open func address(chain: JovaChain, account: UInt32)throws  -> Address  {
 }
     
     /**
-     * Sign a message. Chain is implicit in the `SignableMessage` variant.
+     * Sign a message with the key at HD account index `account`. Chain is
+     * implicit in the `SignableMessage` variant. `account` is required
+     * (mirrors `address`); pass `0` for the primary account.
      */
-open func signMessage(msg: SignableMessage)throws  -> Signature  {
+open func signMessage(msg: SignableMessage, account: UInt32)throws  -> Signature  {
     return try  FfiConverterTypeSignature_lift(try rustCallWithError(FfiConverterTypeFfiError_lift) {
     uniffi_jova_core_ffi_fn_method_jovawallet_sign_message(
             self.uniffiCloneHandle(),
-        FfiConverterTypeSignableMessage_lower(msg),$0
+        FfiConverterTypeSignableMessage_lower(msg),
+        FfiConverterUInt32.lower(account),$0
     )
 })
 }
     
     /**
-     * Sign a transaction. For EVM, the chain ID inside the variant is authoritative.
+     * Sign a transaction with the key at HD account index `account`.
+     *
+     * For EVM, the chain ID inside the variant is authoritative. `account`
+     * selects the same key that `address` returns for the tx's chain, so the
+     * signature always corresponds to that address. `account` is required
+     * (mirrors `address`); pass `0` for the primary account. UniFFI's Kotlin
+     * backend does not emit default argument values, so this is a plain
+     * required parameter rather than a defaulted one.
      */
-open func signTx(tx: UnsignedTx)throws  -> SignedTx  {
+open func signTx(tx: UnsignedTx, account: UInt32)throws  -> SignedTx  {
     return try  FfiConverterTypeSignedTx_lift(try rustCallWithError(FfiConverterTypeFfiError_lift) {
     uniffi_jova_core_ffi_fn_method_jovawallet_sign_tx(
             self.uniffiCloneHandle(),
-        FfiConverterTypeUnsignedTx_lower(tx),$0
+        FfiConverterTypeUnsignedTx_lower(tx),
+        FfiConverterUInt32.lower(account),$0
     )
 })
 }
@@ -1634,10 +1654,10 @@ private let initializationResult: InitializationResult = {
     if (uniffi_jova_core_ffi_checksum_method_jovawallet_address() != 56552) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_jova_core_ffi_checksum_method_jovawallet_sign_message() != 15053) {
+    if (uniffi_jova_core_ffi_checksum_method_jovawallet_sign_message() != 58219) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_jova_core_ffi_checksum_method_jovawallet_sign_tx() != 22368) {
+    if (uniffi_jova_core_ffi_checksum_method_jovawallet_sign_tx() != 21043) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_jova_core_ffi_checksum_constructor_jovawallet_from_mnemonic() != 26437) {

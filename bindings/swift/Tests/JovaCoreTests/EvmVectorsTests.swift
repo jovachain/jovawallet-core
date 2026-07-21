@@ -54,7 +54,7 @@ final class EvmVectorsTests: XCTestCase {
             let expectedHash = (expected["tx_hash"] as! String).lowercased()
 
             let wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: pass)
-            let signed = try wallet.signTx(tx: unsigned)
+            let signed = try wallet.signTx(tx: unsigned, account: 0)
             XCTAssertEqual(
                 signed.rawHex.lowercased(),
                 expectedHex,
@@ -97,7 +97,7 @@ final class EvmVectorsTests: XCTestCase {
             let expectedSig = (expected["signature"] as! String).lowercased()
 
             let wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: pass)
-            let sig = try wallet.signMessage(msg: signable)
+            let sig = try wallet.signMessage(msg: signable, account: 0)
             XCTAssertEqual(
                 sig.hex.lowercased(),
                 expectedSig,
@@ -134,7 +134,7 @@ final class EvmVectorsTests: XCTestCase {
 
             let wallet = try JovaWallet.fromMnemonic(words: mnemonic, passphrase: pass)
             do {
-                _ = try wallet.signTx(tx: unsigned)
+                _ = try wallet.signTx(tx: unsigned, account: 0)
                 XCTFail("Expected FfiError.\(expectedVariant) for vector \(v["id"] ?? "?"), but no error was thrown")
             } catch let err as FfiError {
                 // Verify the variant matches.
